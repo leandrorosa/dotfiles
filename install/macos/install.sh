@@ -16,4 +16,6 @@ brew cask install intellij-idea
 brew cask install google-chrome
 brew cask install spotify
 
+./fish-setup.sh
+
 ./../install.sh

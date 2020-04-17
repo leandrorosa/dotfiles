@@ -4,8 +4,9 @@ My personal dotfiles, it download and install my favourite apps and setup my fis
 
 ## Setup
 ```
+cd ~
 git init
-git remote add origin git@github.com:leandrorosa/dotfiles.git
+git remote add origin https://github.com/leandrorosa/dotfiles.git
 git pull origin master
 ```
 

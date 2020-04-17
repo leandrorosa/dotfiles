@@ -1,6 +1,10 @@
 #!/bin/bash
 
-yum -y install $(cat packages)
+cd ~/install/centos/
+sudo yum update
+sudo yum -y install $(cat packages)
+
+./fish-setup.sh
 
 ./../install.sh
 
