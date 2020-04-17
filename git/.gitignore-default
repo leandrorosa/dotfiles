@@ -1,8 +1,0 @@
-*.idea
-application-leandro.yml
-application-leandro.properties
-application-dev.yml
-application-dev.properties
-*.http
-*.iml
-target/*
