@@ -14,7 +14,9 @@ brew install terraform
 brew cask install visual-studio-code
 brew cask install intellij-idea
 
+
 #apps
+brew cask install station
 brew cask install google-chrome
 brew cask install spotify
 

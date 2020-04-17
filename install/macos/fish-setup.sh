@@ -3,7 +3,7 @@
 #oh my fish
 curl -L https://get.oh-my.fish > omf-install.sh
 chmod +x omf-install.sh
-./omf-install.sh  --yes
+./omf-install.sh  --yes --noninteractive
 
 #fisher package manager
 curl https://git.io/fisher --create-dirs -sLo ~/.config/fish/functions/fisher.fish
