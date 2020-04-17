@@ -1,0 +1,13 @@
+*.idea
+application-leandro.yml
+application-leandro.properties
+application-dev.yml
+application-dev.properties
+*.http
+*.iml
+target/*
+# vim swap files
+.*.sw?
+.netrwhist
+tags
+.DS_Store

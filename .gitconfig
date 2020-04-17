@@ -1,0 +1,38 @@
+[user]
+	email = leandrorosa85@gmail.com
+	name = Leandro Rosa
+
+[core]
+	editor = vim
+	excludesfile = ~/.gitignore_global
+	ignorecase = false
+
+[diff]
+	algorithm = patience
+
+[color]
+	ui = auto
+
+[push]
+	default = simple
+
+[merge]
+	tool = vimdiff
+
+[mergetool "vimdiff"]
+	trustExitCode = false
+
+[github]
+	user = jcelliott
+
+[log]
+	decorate = short
+
+[alias]
+  log-detail = log --all --stat --graph
+  log-branch = log --stat --graph
+  ; log-summary = log --all --graph --oneline
+  log-summary = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+  revision = rev-parse HEAD
+  rev = rev-parse --short HEAD
+  untracked = ls-files --others
