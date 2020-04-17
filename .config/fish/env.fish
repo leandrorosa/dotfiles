@@ -3,6 +3,6 @@
 set -gx GOPATH ~/Code/Go
 mkdir -p GOPATH
 
-
+set -gx PATH ~/bin $PATH
 set -gx PATH (go env GOPATH)/bin $PATH
 
