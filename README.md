@@ -2,12 +2,19 @@
 
 My personal dotfiles, it download and install my favourite apps and setup my fish shell configuration.
 
+## Setup
+```
+git init
+git remote add origin git@github.com:leandrorosa/dotfiles.git
+git pull origin master
+```
+
 ## Mac
 ```
-curl https://raw.githubusercontent.com/leandrorosa/dotfiles/master/install/macos/install.sh | bash
+./install/macos/install.sh
 ```
 
 ## Centos
 ```
-curl https://raw.githubusercontent.com/leandrorosa/dotfiles/master/install/centos/install.sh | bash
+./install/centos/install.sh
 ```
