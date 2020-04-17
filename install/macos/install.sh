@@ -17,5 +17,3 @@ brew cask install google-chrome
 brew cask install spotify
 
 ./../install.sh
-./../fish-setup.sh
-
