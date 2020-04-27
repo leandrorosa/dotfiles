@@ -9,6 +9,7 @@ brew install fish
 brew install go
 brew install htop
 brew install terraform
+brew install gdub
 brew cask install visual-studio-code
 brew cask install intellij-idea
 
