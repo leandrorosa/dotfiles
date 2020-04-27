@@ -12,12 +12,13 @@ brew install vim
 brew install gdub
 brew install terraform
 brew install gdub
+brew tap moncho/dry
+brew install dry
 brew cask install visual-studio-code
 brew cask install intellij-idea
 
 
 #apps
-brew cask install station
 brew cask install google-chrome
 brew cask install spotify
 
