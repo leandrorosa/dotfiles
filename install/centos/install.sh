@@ -12,12 +12,8 @@ brew install docker
 brew install fish
 brew install go
 brew install htop
+
 brew install terraform
-
-
-cd ~/install/centos/
-sudo yum update
-sudo yum -y install $(cat packages)
 
 ./fish-setup.sh
 
