@@ -11,3 +11,4 @@ target/*
 .netrwhist
 tags
 .DS_Store
+.sdkmanrc

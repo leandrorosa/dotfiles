@@ -82,7 +82,7 @@ for f in "${scripts[@]}"; do
 	source "$f"
 done
 IFS="$OLD_IFS"
-unset scripts f
+unset OLD_IFS scripts f
 
 # Load the sdkman config if it exists.
 if [ -f "${SDKMAN_DIR}/etc/config" ]; then
@@ -114,10 +114,7 @@ __sdkman_echo_debug "Setting candidates csv: $SDKMAN_CANDIDATES_CSV"
 if [[ "$zsh_shell" == 'true' ]]; then
 	SDKMAN_CANDIDATES=(${(s:,:)SDKMAN_CANDIDATES_CSV})
 else
-	OLD_IFS="$IFS"
-	IFS=","
-        SDKMAN_CANDIDATES=(${SDKMAN_CANDIDATES_CSV})
-	IFS="$OLD_IFS"
+	IFS=',' read -a SDKMAN_CANDIDATES <<< "${SDKMAN_CANDIDATES_CSV}"
 fi
 
 :
@@ -129,5 +126,23 @@ for candidate_name in "${SDKMAN_CANDIDATES[@]}"; do
 :
 	fi
 done
-unset OLD_IFS candidate_name candidate_dir
+unset candidate_name candidate_dir
 :
+
+if [[ "$sdkman_auto_env" == "true" ]]; then
+	if [[ "$zsh_shell" == "true" ]]; then
+		function sdkman_auto_env() {
+			 [[ -f ".sdkmanrc" ]] && sdk env
+		}
+
+		chpwd_functions+=(sdkman_auto_env)
+	else
+		function sdkman_auto_env() {
+			[[ "$SDKMAN_OLD_PWD" != "$PWD" ]] && [[ -f ".sdkmanrc" ]] && sdk env
+
+:
+		}
+
+		[[ -z "$PROMPT_COMMAND" ]] && PROMPT_COMMAND="sdkman_auto_env" || PROMPT_COMMAND="${PROMPT_COMMAND%\;};sdkman_auto_env"
+	fi
+fi

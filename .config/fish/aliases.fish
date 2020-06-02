@@ -15,3 +15,8 @@ alias hiera-decrypt='docker run -v ~/eyaml-keys/:/keys/ -it --rm --name eyaml ha
 alias hiera-encrypt='docker run -v ~/eyaml-keys/:/keys/ -it --rm --name eyaml halberom/hiera-eyaml encrypt -s'
 alias jh='ssh -i ~/.ssh/issuing_dev.pem -p 443 centos@lb-test-instance-dev-838521851.eu-central-1.elb.amazonaws.com'
 alias dc='docker-compose'
+alias dscp='scp -i ~/.ssh/temp_access.pem -P 443'
+alias jhq='ssh -i ~/.ssh/iss-qa.pem -p 443 centos@lb-test-instance-qa-1548690849.eu-central-1.elb.amazonaws.com'
+alias bundle='brew bundle dump'
+
+
