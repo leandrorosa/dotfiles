@@ -18,5 +18,5 @@ alias dc='docker-compose'
 alias dscp='scp -i ~/.ssh/temp_access.pem -P 443'
 alias jhq='ssh -i ~/.ssh/iss-qa.pem -p 443 centos@lb-test-instance-qa-1548690849.eu-central-1.elb.amazonaws.com'
 alias bundle='brew bundle dump'
-
+alias greset='git checkout . && git reset && git clean -f && git clean -fd'
 
