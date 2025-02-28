@@ -1,0 +1,1 @@
+set -x LOKI_ADDR "http://loki-gateway.loki:80"

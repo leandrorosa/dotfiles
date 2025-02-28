@@ -1,0 +1,7 @@
+application-leandro.yaml
+application-LOCAL.yaml
+.DS_Store
+.idea
+.tool-versions
+.terraform
+.terraform.lock.hcl

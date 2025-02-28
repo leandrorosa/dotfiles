@@ -1,0 +1,1 @@
+set -x ACR_COMMON_URL "4screenacrcommon.azurecr.io"
