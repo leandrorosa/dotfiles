@@ -1,19 +1,17 @@
-source ~/.config/fish/asdf.fish
-source ~/.config/fish/aliases.fish
-source ~/.config/fish/abbrev.fish
-
-for f in ~/.config/fish/env/*.fish;
-    source $f
+function source-dir --description 'Source all files in a directory'
+    for f in $argv[1]/*.fish
+        source $f
+    end
 end
 
-for f in ~/.config/fish/functions/*.fish;
-    source $f
-end
+  source ~/.config/fish/aliases.fish
+source-dir ~/.config/fish/kubernetes
+source-dir ~/.config/fish/env
+source-dir ~/.config/fish/functions
 
-starship init fish | source
+source-dir ~/.config/fish/shell-config
 
-if set -q ZELLIJ
-else
-  zellij
-end
+
+
+
 
