@@ -5,6 +5,6 @@ normal = {family = "FiraCode Nerd Font", style = "Regular"}
 size = 13
 
 [general]
-import = ["/Users/leandrorosa/src/github.com/dracula/alacritty/dracula.toml"]
+import = ["./skins/dracula.toml"]
 
 
