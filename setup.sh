@@ -7,3 +7,6 @@ fi
 
 # Install packages, casks, and taps from Brewfile
 brew bundle --file=~/.dotfiles/Brewfile
+
+# Configure fish as the default shell
+chsh -s /opt/homebrew/bin/fish
