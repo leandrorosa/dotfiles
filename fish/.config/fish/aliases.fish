@@ -1,13 +1,3 @@
-alias ga='git add'
-alias gs='git status'
-alias gc='git commit -m '
-alias gcm='git checkout master'
-alias gcn='git checkout -b'
-alias gpom='git push origin master'
-alias gpum='git pull upstream master'
-alias gpull='git pull origin'
-alias gpush='git push origin'
-
 # alias docker="podman"
 alias d='docker'
 alias mci='mvn clean install'
