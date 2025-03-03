@@ -5,7 +5,10 @@ function source-dir --description 'Source all files in a directory'
 end
 
 source ~/.config/fish/aliases.fish
+
 source-dir ~/.config/fish/kubernetes
+source-dir ~/.config/fish/git
+
 source-dir ~/.config/fish/env
 source-dir ~/.config/fish/functions
 
