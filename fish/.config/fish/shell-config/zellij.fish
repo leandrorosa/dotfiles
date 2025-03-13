@@ -1,4 +1,4 @@
-if set -q ZELLIJ
-else
-    zellij
-end
+# if set -q ZELLIJ
+# else
+#     zellij
+# end
