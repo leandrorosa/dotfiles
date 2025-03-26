@@ -6,10 +6,13 @@ end
 
 source ~/.config/fish/aliases.fish
 
+
 source-dir ~/.config/fish/kubernetes
 source-dir ~/.config/fish/git
+source-dir ~/.config/fish/docker
 
 source-dir ~/.config/fish/env
 source-dir ~/.config/fish/functions
+source-dir ~/.config/fish/completions
 
 source-dir ~/.config/fish/shell-config

@@ -10,6 +10,9 @@ SETUVAR --export --path GOPATH:/Users/leandrorosa
 SETUVAR JAVA_HOME:/opt/homebrew/opt/openjdk
 SETUVAR --export NEXUS_PASSWORD:4xDb8ZfKEabmPo
 SETUVAR --export NEXUS_USERNAME:leandro\x2erosa\x404screen\x2ecom
+SETUVAR --export VAULT_ADDR:https\x3a//vault\x2e4screen\x2edev
+SETUVAR --export VAULT_ADDRESS:https\x3a//vault\x2e4screen\x2edev
+SETUVAR --export VAULT_AGENT_ADDR:https\x3a//vault\x2e4screen\x2edev
 SETUVAR __fish_initialized:3800
 SETUVAR ayu_variant:light
 SETUVAR fish_color_autosuggestion:6272a4

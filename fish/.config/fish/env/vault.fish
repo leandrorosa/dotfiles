@@ -1,3 +1,5 @@
-set -x VAULT_AGENT_ADDR https://vault.4screen.dev
+set -Ux VAULT_AGENT_ADDR https://vault.4screen.dev
 
-set -x VAULT_ADDRESS $VAULT_AGENT_ADDR
+set -Ux VAULT_ADDRESS $VAULT_AGENT_ADDR
+set -Ux VAULT_ADDR $VAULT_AGENT_ADDR
+

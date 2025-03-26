@@ -1,8 +1,6 @@
 
 set -x JAVA_HOME "/Users/leandrorosa/.sdkman/candidates/java/21-tem"
 fish_add_path "$JAVA_HOME/bin"
-fish_add_path "$HOME/bin/jbing-rewards-0.0.1-SNAPSHOT/bin/"
-fish_add_path "$HOME/bin/jib-0.12.0/bin/"
 
 # set -Ux GRADLE_OPTS "-Dorg.gradle.daemon=false" 
 set -e GRADLE_OPTS
