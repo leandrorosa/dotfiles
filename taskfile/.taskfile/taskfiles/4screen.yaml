@@ -1,0 +1,26 @@
+version: '3'
+
+includes:
+  k8s:
+    taskfile: ./k8s.yaml
+    internal: true
+
+tasks:
+
+  project-create:
+    cmds:
+      - |
+        project_type=$(gum choose "spring-boot-service" "java-lib" "empty-repo")
+        
+        echo "Type the name of the new repo:"
+        repo_name=$(gum input --placeholder="my-fancy-repo")
+        
+        ./project-create.sh ${project_type} -n ${repo_name} -d "/Users/leandrorosa/src/github.com/4screen"
+    dir: '/Users/leandrorosa/src/github.com/4screen/github-utilities/project_create'
+    silent: true
+
+
+  restart-unmeshed:
+    cmds:
+      - task: k8s:switch-context
+      - curl -X POST system-k8s-watcher-service.fourscreen:8080/api/system/v1/linkerd/restartUnmeshed

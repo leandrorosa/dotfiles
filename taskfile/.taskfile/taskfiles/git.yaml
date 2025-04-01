@@ -1,0 +1,84 @@
+version: 3
+
+tasks:
+  deploy-key:
+    cmds:
+      - ssh-keygen -t ed25519 -C "leandro.rosa@4screen.com" -f key
+    dir: '/{{ .USER_WORKING_DIR }}'
+    silent: true
+
+  add-all:
+    cmds:
+      - git add .
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  pull-master:
+    cmds:
+      - git pull origin master
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  push-master:
+    cmds:
+      - git push origin master
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  push-current-branch:
+    cmds:
+      - git push origin ${CURRENT_BRANCH}
+    dir: '/{{ .USER_WORKING_DIR }}'
+    silent: true
+    env:
+      CURRENT_BRANCH:
+        # https://git-blame.blogspot.com/2013/06/checking-current-branch-programatically.html
+        sh: git symbolic-ref --short -q HEAD
+
+  pull-current-branch:
+    cmds:
+      - git pull origin ${CURRENT_BRANCH}
+    dir: '/{{ .USER_WORKING_DIR }}'
+    silent: true
+    env:
+      CURRENT_BRANCH:
+        # https://git-blame.blogspot.com/2013/06/checking-current-branch-programatically.html
+        sh: git symbolic-ref --short -q HEAD
+
+  diff-staged:
+    cmds:
+      - git diff --cached
+    dir: '/{{ .USER_WORKING_DIR }}'
+    silent: true
+
+  git-cli-auth:
+    cmds:
+      - gh auth login
+    env:
+      GH_TOKEN: GH_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
+
+  number-of-commits-on-the-month:
+    dir: '/{{ .USER_WORKING_DIR }}'
+    silent: true
+    cmds:
+      - |
+        previous_month=$(date -v-1m +"%Y-%m")
+        
+        first_day="${previous_month}-01"
+        last_day=$(date -v1d -v+1m -v-1d -j -f "%Y-%m" "$previous_month" +"%Y-%m-%d")
+        
+        git fetch --all
+        number_of_commits=$(git log --since=$first_day --until=$last_day --oneline -- resources/emea/prod | wc -l | xargs)
+        echo "Number of commits on the month on $(pwd): $number_of_commits"
+        
+  sbom-gen:
+    cmds:
+      - |
+        curl -H "Authorization: token <YOUR_PERSONAL_ACCESS_TOKEN>" \
+             -H "Accept: application/vnd.github.v3+json" \
+             https://api.github.com/repos/<owner>/<repo>/dependency-graph/sbom
+    dir: '/{{ .USER_WORKING_DIR }}'
+    silent: true
+
+
+        

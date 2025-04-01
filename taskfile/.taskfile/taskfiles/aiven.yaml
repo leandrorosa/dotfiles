@@ -1,0 +1,136 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  connection-info:
+    cmds:
+      - |
+        source ./taskfiles/aiven/select-project-service.sh
+        
+        avn service get ${SERVICE} --project ${PROJECT} --json | jq '.components[]'
+    silent: true
+
+  prometheus-metrics:
+    cmds:
+      - curl -k --user ${PROM_USER}:${PROM_PASSWORD} https://postgres-emea-dev-fourscreen-emea-dev.aivencloud.com:9273/metrics > pg-metrics.txt
+    dir: '/{{ .USER_WORKING_DIR }}'
+    env:
+      PROM_USER:
+        sh: vault kv get --field=username secret/emea-dev/aiven/prometheus
+      PROM_PASSWORD:
+        sh: vault kv get --field=password secret/emea-dev/aiven/prometheus
+
+  clickhouse-prometheus-metrics:
+    cmds:
+      - curl -k --user ${PROM_USER}:${PROM_PASSWORD} https://clickhouse-common-fourscreen-common.aivencloud.com:9273/metrics > pg-metrics.txt
+    dir: '/{{ .USER_WORKING_DIR }}'
+    env:
+      PROM_USER:
+        sh: vault kv get --field=username secret/common/aiven/prometheus
+      PROM_PASSWORD:
+        sh: vault kv get --field=password secret/common/aiven/prometheus
+
+  login:
+    cmds:
+      - avn user login leandro.rosa@4screen.com
+
+
+  privatelink-approve:
+    cmds:
+      - |
+        source ./taskfiles/aiven/select-project-service.sh
+        
+        CONNECTION_ID=$(avn service privatelink azure connection list --project "${PROJECT}" "${SERVICE}" --json | jq -r '.[] | select(.state == "pending-user-approval") | .privatelink_connection_id')
+        
+        avn service privatelink azure connection approve --project "${PROJECT}" "${SERVICE}" "${CONNECTION_ID}"
+    silent: true
+
+  privatelink-connection-list:
+    cmds:
+      - |
+        source ./taskfiles/aiven/select-project-service.sh
+
+        avn service privatelink azure connection list --project "${PROJECT}" "${SERVICE}" --json | jq -r '.'
+
+    silent: true
+
+  privatelink-update:
+    cmds:
+      - |
+        source ./taskfiles/aiven/select-project-service.sh
+        
+        CONNECTION_ID=$(avn service privatelink azure connection list --project "${PROJECT}" "${SERVICE}" --json | jq -r '.[] | select(.state == "connected") | .privatelink_connection_id')
+        
+        avn service privatelink azure connection update --project "${PROJECT}" --endpoint-ip-address 10.241.0.6 "${SERVICE}" "${CONNECTION_ID}" --json
+    silent: true
+
+  privatelink-status:
+    cmds:
+      - |
+        source ./taskfiles/aiven/select-project-service.sh
+        avn service privatelink azure connection list --project "${PROJECT}" "${SERVICE}" --json | jq '.[]'
+    silent: true
+
+  privatelink-refresh:
+    cmds:
+      - |
+        source ./taskfiles/aiven/select-project-service.sh
+        avn service privatelink azure refresh --project "${PROJECT}" "${SERVICE}"
+    silent: true
+
+  vpc-peering-update:
+    cmds:
+      - |
+        source ./taskfiles/aiven/select-project-service.sh
+        PROJECT_VPC_ID=$(avn vpc list --project ${PROJECT} --json | jq -r .[].project_vpc_id)
+        
+        PEERING_CONNECTION_LIST_JSON=$(avn vpc peering-connection list --project ${PROJECT} --project-vpc-id ${PROJECT_VPC_ID} --json)
+        
+        CLOUD_ACCOUNT=$(echo ${PEERING_CONNECTION_LIST_JSON} | jq -r .[].peer_cloud_account)
+        PEER_RESOURCE_GROUP=$(echo ${PEERING_CONNECTION_LIST_JSON} | jq -r .[].peer_resource_group)
+        PEER_VPC=$(echo ${PEERING_CONNECTION_LIST_JSON} | jq -r .[].peer_vpc)
+        
+        avn vpc user-peer-network-cidr add "10.240.0.0/16" --project ${PROJECT} --project-vpc-id ${PROJECT_VPC_ID} --peer-cloud-account $CLOUD_ACCOUNT --peer-resource-group $PEER_RESOURCE_GROUP --peer-vpc $PEER_VPC --json
+    
+    silent: false
+
+  kafka-topic-list:
+    cmds:
+      - |
+        source ./taskfiles/aiven/select-project-service.sh
+        
+        avn service topic-list ${SERVICE} --project ${PROJECT}
+
+    silent: true
+
+  kafka-consumer:
+    cmds:
+      - |
+        export ENVIRONMENT="emea-dev"
+        export KAFKA_HOST=$(vault kv get --field=host secret/${ENVIRONMENT}/aiven/kafka/read)
+        export KAFKA_USER=$(vault kv get --field=user secret/${ENVIRONMENT}/aiven/kafka/read)
+        export KAFKA_PASSWORD=$(vault kv get --field=password secret/${ENVIRONMENT}/aiven/kafka/read)
+        
+        rm -rf vault/aiven/kafka/${ENVIRONMENT}
+        mkdir -p vault/aiven/kafka/${ENVIRONMENT}
+        vault kv get --field=ca.crt secret/${ENVIRONMENT}/aiven/kafka/read > vault/aiven/kafka/${ENVIRONMENT}/ca.pem
+        
+        python3 python/kafka/consumer.py
+    silent: true
+
+  kafka-producer:
+    cmds:
+      - |
+        export ENVIRONMENT="emea-dev"
+        export KAFKA_HOST=$(vault kv get --field=host secret/${ENVIRONMENT}/aiven/kafka/readWrite)
+        export KAFKA_USER=$(vault kv get --field=user secret/${ENVIRONMENT}/aiven/kafka/readWrite)
+        export KAFKA_PASSWORD=$(vault kv get --field=password secret/${ENVIRONMENT}/aiven/kafka/readWrite)
+
+        rm -rf vault/aiven/kafka/${ENVIRONMENT}
+        mkdir -p vault/aiven/kafka/${ENVIRONMENT}
+        vault kv get --field=ca.crt secret/${ENVIRONMENT}/aiven/kafka/read > vault/aiven/kafka/${ENVIRONMENT}/ca.pem
+
+        go run go/kafka/producer.go
+
+    silent: true

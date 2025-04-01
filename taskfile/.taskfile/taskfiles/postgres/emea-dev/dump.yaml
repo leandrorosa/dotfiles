@@ -1,0 +1,105 @@
+# https://taskfile.dev
+
+version: '3'
+
+
+includes:
+  k8s:
+    taskfile: ./../../k8s.yaml
+    internal: true
+
+tasks:
+  default:
+    cmds:
+      - task -a
+    silent: true
+
+  dump:
+    cmds:
+      - telepresence connect --context emea-dev
+      - echo "Taking pg_dump from {{ .DATABASE }} on ${HOST}"
+      - mkdir -p emea-dev
+      - rm -f ./emea-dev/{{ .DATABASE }}.dump
+      - pg_dump --clean --if-exists -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d "{{ .DATABASE }}" -F p -f "./emea-dev/{{ .DATABASE }}.dump" -v
+      - echo "Dump generated ./emea-dev/{{ .DATABASE }}.dump"
+      - ls -lhs "./emea-dev/{{ .DATABASE }}.dump"
+    dir: '/{{ .USER_WORKING_DIR }}'
+    internal: true
+    silent: true
+    env:
+      HOST: postgres-proxy-service.aiven
+      PORT: 13861
+      USERNAME:
+        sh: vault kv get --field=username secret/emea-dev/aiven/postgres/admin
+      PGPASSWORD:
+        sh: vault kv get --field=password secret/emea-dev/aiven/postgres/admin
+
+
+#  demand-customer-integration-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: demand-customer-integration-svc-db
+#
+  keycloak-db:
+    cmds:
+      - task: dump
+        vars:
+          DATABASE: keycloak-db
+
+#  location-poi-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: location-poi-svc-db
+#
+#  location-region-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: location-region-svc-db
+
+  # took 4m36s
+#  operations-billing-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: operations-billing-svc-db
+
+#  operations-erp-facade-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: operations-erp-facade-svc-db
+
+#  operations-iam-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: operations-iam-svc-db
+
+#  promotion-campaign-configuration-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: promotion-campaign-configuration-svc-db
+#
+#  promotion-campaign-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: promotion-campaign-svc-db
+
+#  supply-billable-transaction-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: supply-billable-transaction-svc-db
+#
+#  supply-budget-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: supply-budget-svc-db
+#
+#

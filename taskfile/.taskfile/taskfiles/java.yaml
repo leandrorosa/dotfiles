@@ -1,0 +1,47 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+
+  gradle-build:
+    cmds:
+      - ./gradlew build
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  gradle-publish-to-maven-local:
+    cmds:
+      - ./gradlew publishToMavenLocal
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+
+
+  create-maven-project:
+    cmds:
+      - mvn archetype:generate -DarchetypeGroupId=org.apache.maven.archetypes -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.4
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+
+  mvn-package:
+    cmds:
+      - mvn package
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  mvn-lint-format:
+    cmds:
+      - mvn tidy:pom com.spotify.fmt:fmt-maven-plugin:format
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  mvn-lint-check:
+    cmds:
+      - mvn tidy:check com.spotify.fmt:fmt-maven-plugin:check
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  uncompress-jar:
+    cmds:
+      - jar xf "*.jar" -C "."
+    dir: '/{{ .USER_WORKING_DIR }}'
+

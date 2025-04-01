@@ -1,0 +1,6 @@
+
+version: '3'
+
+tasks:
+  web-ui:
+    cmd: open http://alloy-cluster.alloy:12345/

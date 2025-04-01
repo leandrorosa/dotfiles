@@ -1,0 +1,134 @@
+# https://taskfile.dev
+
+version: '3'
+
+
+includes:
+  dump: ./dump.yaml
+  restore: ./restore.yaml
+  k8s:
+    taskfile: ./../../k8s.yaml
+    internal: true
+
+tasks:
+  default:
+    cmds:
+      - task -a
+    silent: true
+
+
+  db_sizes-azure:
+    cmds:
+      - task: k8s:ctx-emea-dev
+      - psql -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d postgres -c "\l+"
+    silent: true
+    env:
+      HOST: 4screenpostgresqlserveremeadev.privatelink.postgres.database.azure.com
+      PORT: 5432
+      USERNAME:
+        sh: vault kv get --field=username secret/emea-dev/azure/postgres/admin
+      PGPASSWORD:
+        sh: vault kv get --field=password secret/emea-dev/azure/postgres/admin
+
+  db_sizes-aiven:
+    cmds:
+      - task: k8s:ctx-emea-dev
+      - psql -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d defaultdb -c "\l+"
+    silent: true
+    env:
+      HOST: postgres-proxy-service.aiven
+      PORT:
+        sh: vault kv get --field=port secret/emea-dev/aiven/postgres/admin
+      USERNAME:
+        sh: vault kv get --field=username secret/emea-dev/aiven/postgres/admin
+      PGPASSWORD:
+        sh: vault kv get --field=password secret/emea-dev/aiven/postgres/admin
+
+  list-dead-tuples:
+    cmds:
+      - task: k8s:ctx-emea-dev
+      - psql -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d {{ .DATABASE }} -c "SELECT relname, n_dead_tup FROM pg_stat_user_tables WHERE relname = '{{ .TABLE }}';"
+    silent: true
+    internal: true
+    env:
+      HOST: 4screenpostgresqlserveremeadev.privatelink.postgres.database.azure.com
+      PORT: 5432
+      USERNAME:
+        sh: vault kv get --field=username secret/emea-dev/azure/postgres/admin
+      PGPASSWORD:
+        sh: vault kv get --field=password secret/emea-dev/azure/postgres/admin
+
+  vacuum-analyze-table-azure:
+    cmds:
+      - task: k8s:ctx-emea-dev
+      - psql -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d {{ .DATABASE }} -c "VACUUM VERBOSE {{ .SCHEMA }}.{{ .TABLE }};"
+      - psql -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d {{ .DATABASE }} -c "ANALYZE VERBOSE {{ .SCHEMA }}.{{ .TABLE }};"
+    silent: true
+    internal: true
+    env:
+      HOST: 4screenpostgresqlserveremeadev.privatelink.postgres.database.azure.com
+      PORT: 5432
+      USERNAME:
+        sh: vault kv get --field=username secret/emea-dev/azure/postgres/admin
+      PGPASSWORD:
+        sh: vault kv get --field=password secret/emea-dev/azure/postgres/admin
+
+  vacuum-billing-transactions-azure:
+    cmds:
+      - task: vacuum-analyze-table-azure
+        vars:
+          DATABASE: operations-billing-svc-db
+          TABLE: transaction
+          SCHEMA: public
+    silent: true
+
+  list-dead-tuples-billing-transactions-azure:
+    cmds:
+      - task: list-dead-tuples
+        vars:
+          DATABASE: operations-billing-svc-db
+          TABLE: transaction
+    silent: true
+
+  vacuum-location-openinghour-aud-azure:
+    cmds:
+      - task: vacuum-analyze-table-azure
+        vars:
+          DATABASE: location-poi-svc-db
+          TABLE: openinghour_aud
+          SCHEMA: public
+    silent: true
+
+  aiven-postgres-migration-check:
+    cmds:
+      - |
+        avn service task-create --operation migration_check --source-service-uri postgres://${USERNAME}:${PASSWORD}@${HOST}:${PORT}/${DATABASE} --project ${PROJECT} ${SERVICE} --json 
+        TASK_ID=$(avn service task-create --operation migration_check --source-service-uri postgres://${USERNAME}:${PASSWORD}@${HOST}:${PORT}/${DATABASE} --project ${PROJECT} ${SERVICE} --json | jq -r '.[].task_id')
+#        avn service task-get --task-id ${TASK_ID} --project ${PROJECT} ${SERVICE}
+
+    silent: true
+    env:
+      HOST:
+        sh: vault kv get --field=host secret/emea-dev/aiven/postgres/admin
+      PORT:
+        sh: vault kv get --field=port secret/emea-dev/aiven/postgres/admin
+      USERNAME:
+        sh: vault kv get --field=username secret/emea-dev/aiven/postgres/admin
+      PASSWORD:
+        sh: vault kv get --field=password secret/emea-dev/aiven/postgres/admin
+      USER:
+        sh: vault kv get --field=username secret/emea-dev/aiven/postgres/admin
+      DATABASE:
+        sh: vault kv get --field=dbname secret/emea-dev/aiven/postgres/admin
+      PROJECT: fourscreen-emea-dev
+      SERVICE: postgres-emea-dev
+
+  aiven-postgres-migration-result:
+    cmds:
+      - avn service task-get --task-id {{.CLI_ARGS}} --project ${PROJECT} ${SERVICE}
+    silent: true
+    env:
+      PROJECT: fourscreen-emea-dev
+      SERVICE: postgres-emea-dev
+
+

@@ -1,0 +1,90 @@
+# https://taskfile.dev
+
+version: '3'
+
+env:
+  VAULT_ADDRESS: https://vault.4screen.dev
+
+
+tasks:
+  default:
+    cmds:
+      - task -a
+    silent: true
+
+  format:
+    cmds:
+      - tflint -f compact --recursive --disable-rule terraform_required_providers --disable-rule terraform_required_version --fix
+      - terraform fmt --recursive
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  trivy:
+    cmds:
+      - trivy config ./
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  clean-up:
+    cmds:
+      - rm -rf .terraform
+      - rm -f .terraform.lock.hcl
+    silent: true
+    internal: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  init:
+    cmds:
+      - task: clean-up
+      - task: render-tfvars
+      - terraform init
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+
+  render-tfvars:
+    internal: true
+    cmds:
+      - |
+        echo "Select an environment:"
+        ENVIRONMENT=$(kubectx | gum choose)
+        cat > pipeline.auto.tfvars <<EOF
+        
+        aiven_token="${AIVEN_TOKEN}"
+        vault_address="${VAULT_ADDRESS}"
+        vault_token="${VAULT_ROOT_TOKEN}"
+        
+        client_id="$(vault kv get --field client_id secret/${ENVIRONMENT}/unmanaged/azure/terraform)"
+        client_secret="$(vault kv get --field client_secret secret/${ENVIRONMENT}/unmanaged/azure/terraform)"
+        
+        subscription_id="$(vault kv get --field subscription_id secret/${ENVIRONMENT}/unmanaged/azure/terraform)"
+        tenant_id="$(vault kv get --field tenant_id secret/${ENVIRONMENT}/unmanaged/azure/terraform)"
+        subscription_id_na_int="$(vault kv get --field subscription_id secret/na-int/unmanaged/azure/terraform)"
+        
+        postgresql_server_admin_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/admin)"
+        keycloak_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/keycloak_db)"
+        location_poi_svc_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/location_poi_svc_db)"
+        promotion_campaign_svc_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/promotion_campaign_svc_db)"
+        promotion_campaign_configuration_svc_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/promotion_campaign_configuration_svc_db)"
+        location_region_svc_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/location_region_svc_db)"
+        operations_iam_svc_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/operations_iam_svc_db)"
+        supply_billable_transaction_svc_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/supply_billable_transaction_svc_db)"
+        operations_billing_svc_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/operations_billing_svc_db)"
+        operations_erp_facade_svc_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/operations_erp_facade_svc_db)"
+        supply_budget_svc_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/supply_budget_svc_db)"
+        demand_customer_integration_svc_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/demand_customer_integration_svc_db)"
+        operations_exchange_rate_svc_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/operations_exchange_rate_svc_db)"
+        
+        apicurio_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/apicurio_db)"
+        metabase_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/metabase_db)"
+        customer_metabase_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/customer_metabase_db)"
+        analytics_db_password="$(vault kv get --field password secret/${ENVIRONMENT}/aiven/postgres/analytics_db)"
+        
+        nexus_admin_pw="dummy"
+        clickhouse_key_id="$(vault kv get --field 'key_id' secret/general-secrets/unmanaged/clickhouse_cloud)"
+        clickhouse_key_secret="$(vault kv get --field 'key_secret' secret/general-secrets/unmanaged/clickhouse_cloud)"
+        clickhouse_organization_id="$(vault kv get --field 'organization_id' secret/general-secrets/unmanaged/clickhouse_cloud)"
+        
+        EOF
+    dir: '/{{ .USER_WORKING_DIR }}'
+    silent: true

@@ -1,0 +1,115 @@
+# https://taskfile.dev
+
+version: '3'
+
+
+includes:
+  k8s:
+    taskfile: ./../../k8s.yaml
+    internal: true
+
+tasks:
+  default:
+    cmds:
+      - task -a
+    silent: true
+
+  restore:
+    cmds:
+      - telepresence connect --context emea-dev
+      - echo "Restoring dump of "{{ .DATABASE }}" on "${HOST}""
+      - psql -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d "{{ .DATABASE }}" < "./emea-dev/{{ .DATABASE }}.dump"
+    dir: '/{{ .USER_WORKING_DIR }}'
+    internal: true
+    silent: true
+    env:
+      HOST: postgres-proxy-service.aiven
+      PORT:
+        sh: vault kv get --field=port secret/emea-dev/aiven/postgres/admin
+      USERNAME:
+        sh: vault kv get --field=username secret/emea-dev/aiven/postgres/admin
+      PGPASSWORD:
+        sh: vault kv get --field=password secret/emea-dev/aiven/postgres/admin
+
+  keycloak-restore-operator:
+    cmds:
+      - telepresence connect --context emea-dev
+      - echo "Restoring dump of "keycloak-db.dump" on "${HOST}""
+      - psql -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d "{{ .DATABASE }}" < "./emea-dev/keycloak-db.dump"
+    dir: '/{{ .USER_WORKING_DIR }}'
+    silent: true
+    env:
+      HOST: keycloak-db-rw.keycloak-test
+      PORT: 5432
+      USERNAME: app
+      PGPASSWORD:
+        sh: vault kv get --field=password secret/emea-dev/unmanaged/cloudnative-pg/keycloak
+
+#  demand-customer-integration-svc-db:
+#    cmds:
+#      - task: restore
+#        vars:
+#          DATABASE: demand-customer-integration-svc-db
+
+  keycloak-db:
+    cmds:
+      - task: restore
+        vars:
+          DATABASE: keycloak-db
+
+#  location-poi-svc-db:
+#    cmds:
+#      - task: restore
+#        vars:
+#          DATABASE: location-poi-svc-db
+
+#  location-region-svc-db:
+#    cmds:
+#      - task: restore
+#        vars:
+#          DATABASE: location-region-svc-db
+
+
+  operations-billing-svc-db:
+    cmds:
+      - task: restore
+        vars:
+          DATABASE: operations-billing-svc-db
+
+#  operations-erp-facade-svc-db:
+#    cmds:
+#      - task: restore
+#        vars:
+#          DATABASE: operations-erp-facade-svc-db
+
+#  operations-iam-svc-db:
+#    cmds:
+#      - task: restore
+#        vars:
+#          DATABASE: operations-iam-svc-db
+
+#  promotion-campaign-configuration-svc-db:
+#    cmds:
+#      - task: restore
+#        vars:
+#          DATABASE: promotion-campaign-configuration-svc-db
+
+#  promotion-campaign-svc-db:
+#    cmds:
+#      - task: restore
+#        vars:
+#          DATABASE: promotion-campaign-svc-db
+
+#  supply-billable-transaction-svc-db:
+#    cmds:
+#      - task: restore
+#        vars:
+#          DATABASE: supply-billable-transaction-svc-db
+
+#  supply-budget-svc-db:
+#    cmds:
+#      - task: restore
+#        vars:
+#          DATABASE: supply-budget-svc-db
+
+

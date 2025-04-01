@@ -1,0 +1,52 @@
+version: 3
+
+tasks:
+
+  serve:
+    cmds:
+      - OLLAMA_ORIGINS=app://obsidian.md* ollama serve
+
+  run-llama:
+    cmds:
+      - ollama run llama2
+
+  run-llama-uncensored:
+    cmd: ollama run llama2-uncensored
+
+  run-codellama:
+    cmd: ollama run codellama
+
+  web-ui:
+    cmds:
+      - podman run -d -p 3000:8080 -e OLLAMA_API_BASE_URL=http://127.0.0.1:11434/api --name ollama-webui --restart always ghcr.io/ollama-webui/ollama-webui:main
+      - open http://localhost:3000
+    silent: true
+
+  terminal-chat:
+    cmds:
+      - oatmeal
+
+  # ref: https://github.dev/RomanHotsiy/commitgpt
+  git-commit-msg:
+    cmds:
+      - |
+        GIT_DIFF=$(git diff --cached)
+        
+        PROMPT="
+        suggest 10 one liner commit messages based on the following diff:, \
+        ${GIT_DIFF}, \ 
+        , \
+        commit messages should:, \
+         - follow conventional commits, \
+         - message format should be: <type>[scope]: <description>, \
+        \
+        , \
+        examples:, \
+         - fix(authentication): add password regex pattern, \
+         - feat(storage): add new test cases \
+        
+        
+        "
+        ollama run llama2 "$PROMPT"
+    dir: '/{{ .USER_WORKING_DIR }}'
+    silent: true

@@ -1,0 +1,10 @@
+version: "3"
+
+env:
+  LOKI_ADDR: http://loki-gateway.loki:80
+
+tasks:
+
+  tail-loki:
+    cmds:
+      - logcli query '{namespace="loki", app="loki"}' -o raw -t

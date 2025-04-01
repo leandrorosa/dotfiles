@@ -1,0 +1,57 @@
+# https://taskfile.dev
+
+version: '3'
+
+
+includes:
+  k8s:
+    taskfile: ./../../k8s.yaml
+    internal: true
+
+tasks:
+  default:
+    cmds:
+      - task -a
+    silent: true
+
+#  restore:
+#    cmds:
+#      - task: k8s:switch-context
+#      - echo "Restoring dump of "{{ .DATABASE }}" on "${HOST}""
+#      - psql -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d "{{ .DATABASE }}" < "./common/{{ .DATABASE }}.dump"
+#    dir: '/{{ .USER_WORKING_DIR }}'
+#    internal: true
+#    silent: true
+#    env:
+#      HOST: postgres-proxy-service.aiven
+#      PORT:
+#        sh: vault kv get --field=port secret/common/aiven/postgres/admin
+#      USERNAME:
+#        sh: vault kv get --field=username secret/common/aiven/postgres/admin
+#      PGPASSWORD:
+#        sh: vault kv get --field=password secret/common/aiven/postgres/admin
+
+#  metabase-db:
+#    cmds:
+#      - task: restore
+#        vars:
+#          DATABASE: metabase-db
+#
+#  customer-metabase-db:
+#    cmds:
+#      - task: restore
+#        vars:
+#          DATABASE: customer-metabase-db
+
+  apicurio-db:
+    cmds:
+      - task: restore
+        vars:
+          DATABASE: apicurio-db
+
+  keycloak-db:
+    cmds:
+      - task: restore
+        vars:
+          DATABASE: keycloak-db
+

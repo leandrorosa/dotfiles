@@ -1,0 +1,108 @@
+# https://taskfile.dev
+
+version: '3'
+
+
+includes:
+  k8s:
+    taskfile: ./../../k8s.yaml
+    internal: true
+
+tasks:
+  default:
+    cmds:
+      - task -a
+    silent: true
+
+  dump:
+    cmds:
+      - task: k8s:switch-context
+      - echo "Taking pg_dump from {{ .DATABASE }} on ${HOST}"
+      - mkdir -p emea-int
+      - rm -f ./emea-int/{{ .DATABASE }}.dump
+      - pg_dump --clean --if-exists -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d "{{ .DATABASE }}" -F p -f "./emea-int/{{ .DATABASE }}.dump" -v
+      - echo "Dump generated ./emea-int/{{ .DATABASE }}.dump"
+      - ls -lhs "./emea-int/{{ .DATABASE }}.dump"
+    dir: '/{{ .USER_WORKING_DIR }}'
+    internal: true
+    silent: true
+    env:
+      HOST: postgres-proxy-service.aiven
+      PORT:
+        sh: vault kv get --field=port secret/emea-int/aiven/postgres/admin
+      USERNAME:
+        sh: vault kv get --field=username secret/emea-int/aiven/postgres/admin
+      PGPASSWORD:
+        sh: vault kv get --field=password secret/emea-int/aiven/postgres/admin
+
+#  demand-customer-integration-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: demand-customer-integration-svc-db
+#
+  keycloak-db:
+    cmds:
+      - task: dump
+        vars:
+          DATABASE: keycloak-db
+#
+  #  took 3m27s
+#  location-poi-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: location-poi-svc-db
+
+  location-region-svc-db:
+    cmds:
+      - task: dump
+        vars:
+          DATABASE: location-region-svc-db
+
+  # took 1h40m58s
+  # 1.151.423
+  # 412 m
+  operations-billing-svc-db:
+    cmds:
+      - task: dump
+        vars:
+          DATABASE: operations-billing-svc-db
+
+#  operations-erp-facade-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: operations-erp-facade-svc-db
+#
+#  operations-iam-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: operations-iam-svc-db
+#
+#  promotion-campaign-configuration-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: promotion-campaign-configuration-svc-db
+#
+#  promotion-campaign-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: promotion-campaign-svc-db
+#
+#  supply-billable-transaction-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: supply-billable-transaction-svc-db
+#
+#  supply-budget-svc-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: supply-budget-svc-db
+
+

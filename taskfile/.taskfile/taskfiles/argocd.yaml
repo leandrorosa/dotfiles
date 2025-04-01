@@ -1,0 +1,35 @@
+version: '3'
+
+includes:
+  k8s:
+    taskfile: ./k8s.yaml
+    internal: true
+  util:
+    taskfile: ./util.yaml
+    internal: true
+
+tasks:
+
+  ui:
+    silent: true
+    cmds:
+      - task: k8s:switch-context
+      - task: util:open-browser
+        vars:
+          URL: http://argocd-server.argocd/argo-cd/login
+
+  login:
+    cmds:
+      - task: k8s:switch-context
+      - argocd login cd.argoproj.io --core
+      - kubens argocd
+    silent: true
+
+  sync:
+    description: scan for OutOfSync apps and Sync them
+    silent: true
+    cmds:
+      - task: login
+      - |
+        APP=$(gum choose $(argocd app list -o yaml | yq  '.[] | select(.status.sync.status != "Synced") | .metadata.name'))
+        argocd app sync ${APP}

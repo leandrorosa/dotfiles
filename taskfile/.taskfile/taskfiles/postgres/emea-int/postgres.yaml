@@ -1,0 +1,91 @@
+# https://taskfile.dev
+
+version: '3'
+
+
+includes:
+  dump: ./dump.yaml
+  restore: ./restore.yaml
+  k8s:
+    taskfile: ./../../k8s.yaml
+    internal: true
+
+tasks:
+  default:
+    cmds:
+      - task -a
+    silent: true
+
+
+  db_sizes-azure:
+    cmds:
+      - task: k8s:ctx-emea-int
+      - psql -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d postgres -c "\l+"
+    dir: '/{{ .USER_WORKING_DIR }}'
+    silent: true
+    env:
+      HOST: 4screenpostgresqlserveremeaint.privatelink.postgres.database.azure.com
+      PORT: 5432
+      USERNAME:
+        sh: vault kv get --field=username secret/emea-int/azure/postgres/admin
+      PGPASSWORD:
+        sh: vault kv get --field=password secret/emea-int/azure/postgres/admin
+
+  db_sizes-aiven:
+    cmds:
+      - task: k8s:ctx-emea-int
+      - psql -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d defaultdb -c "\l+"
+    dir: '/{{ .USER_WORKING_DIR }}'
+    silent: true
+    env:
+      HOST:
+        sh: vault kv get --field=host secret/emea-int/aiven/postgres/admin
+      PORT:
+        sh: vault kv get --field=port secret/emea-int/aiven/postgres/admin
+      USERNAME:
+        sh: vault kv get --field=username secret/emea-int/aiven/postgres/admin
+      PGPASSWORD:
+        sh: vault kv get --field=password secret/emea-int/aiven/postgres/admin
+
+  vacuum-analyze-table-azure:
+    cmds:
+      - task: k8s:ctx-emea-dev
+      - psql -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d {{ .DATABASE }} -c "VACUUM VERBOSE {{ .SCHEMA }}.{{ .TABLE }};"
+      - psql -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d {{ .DATABASE }} -c "ANALYZE VERBOSE {{ .SCHEMA }}.{{ .TABLE }};"
+    silent: true
+    internal: true
+    env:
+      HOST: 4screenpostgresqlserveremeadev.privatelink.postgres.database.azure.com
+      PORT: 5432
+      USERNAME:
+        sh: vault kv get --field=username secret/emea-dev/azure/postgres/admin
+      PGPASSWORD:
+        sh: vault kv get --field=password secret/emea-dev/azure/postgres/admin
+
+  vacuum-billing-transactions-azure:
+    cmds:
+      - task: vacuum-analyze-table-azure
+        vars:
+          DATABASE: operations-billing-svc-db
+          TABLE: transaction
+          SCHEMA: public
+    silent: true
+
+  list-dead-tuples-billing-transactions-azure:
+    cmds:
+      - task: list-dead-tuples
+        vars:
+          DATABASE: operations-billing-svc-db
+          TABLE: transaction
+    silent: true
+
+  vacuum-location-openinghour-aud-azure:
+    cmds:
+      - task: vacuum-analyze-table-azure
+        vars:
+          DATABASE: location-poi-svc-db
+          TABLE: openinghour_aud
+          SCHEMA: public
+    silent: true
+
+

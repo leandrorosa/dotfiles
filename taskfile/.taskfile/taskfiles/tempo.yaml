@@ -1,0 +1,6 @@
+version: "3"
+
+tasks:
+  compaction-summary-emea-prod:
+    cmds:
+      - tempo-cli list compaction-summary single-tenant -c ~/.config/tempo/config-emea-prod.yaml

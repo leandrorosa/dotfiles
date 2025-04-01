@@ -1,0 +1,16 @@
+
+version: '3'
+
+tasks:
+
+  start:
+    cmd: minikube start --driver=podman --cpus 2
+
+  
+  addons-enable:
+    cmds:
+      - minikube addons enable dashboard
+
+
+  dashboard:
+    cmd: minikube dashboard

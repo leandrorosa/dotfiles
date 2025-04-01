@@ -1,0 +1,15 @@
+version: "3"
+
+tasks:
+  create-cli-maven:
+    cmds:
+      - spring init --build maven --package-name org.lrosa -x -d lombok,native,shell {{.CLI_ARGS}}
+#      -  quarkus create cli --gradle-kotlin-dsl --kotlin org.lrosa:{{.CLI_ARGS}}
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+
+  run-local-gradle:
+    cmds:
+      - ./gradlew bootRun --args='--spring.profiles.active=local'
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'

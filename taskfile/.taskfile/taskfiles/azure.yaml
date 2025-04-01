@@ -1,0 +1,203 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  vm-ssh:
+    # to discover the disk usage on the machine use `ncdu`
+    desc: Connect to Strapi VM in Azure
+    cmds:
+      - az account set --subscription fourscreen_misc
+      - az ssh vm -n strapi -g rg-website
+    silent: false
+
+  set-active-subscription:
+    cmds:
+      - | 
+        SUBSCRIPTION=$(az account list --output json | jq -r '.[].name' | gum choose)
+        az account set --subscription ${SUBSCRIPTION}
+    silent: true
+    internal: true
+
+  check-node-os-upgrade-channel-feature-enabled:
+    cmds:
+      - task: set-active-subscription
+      - az feature list | jq '.[] | select(.name=="microsoft.ContainerService/NodeOsUpgradeChannelPreview")'
+    silent: true
+
+  postgres-status-emea-dev:
+    cmds:
+      - az account set --subscription fourscreen_emea-dev
+      - az postgres server show -n 4screenpostgresqlserveremeadev --resource-group rg-dbserver-emea-dev | jq -r '.userVisibleState'
+    silent: true
+
+  postgres-status-emea-int:
+    cmds:
+      - az account set --subscription fourscreen_emea-int
+      - az postgres server show -n 4screenpostgresqlserveremeaint --resource-group rg-dbserver-emea-int | jq -r '.userVisibleState'
+    silent: true
+
+  postgres-status-emea-prod:
+    cmds:
+      - az account set --subscription fourscreen_emea-prod
+      - az postgres server show -n 4screenpostgresqlserveremeaprod --resource-group rg-dbserver-emea-prod | jq -r '.userVisibleState'
+    silent: true
+
+  aks-get-upgrades:
+    desc: List available upgrades for an AKS cluster (emea-dev)
+    cmds:
+      - task: set-active-subscription
+      - |
+        CLUSTER_NAME=$(az aks list --output json | jq -r '.[].name')
+        RESOURCE_GROUP=$(az aks list --output json | jq -r '.[].resourceGroup')
+        az aks get-upgrades --name ${CLUSTER_NAME} --resource-group ${RESOURCE_GROUP} -o yaml
+    silent: true
+
+  aks-setup-local:
+    cmds:
+      - task: set-active-subscription
+      - |
+        CLUSTER_NAME=$(az aks list --output json | jq -r '.[].name')
+        RESOURCE_GROUP=$(az aks list --output json | jq -r '.[].resourceGroup')
+        az aks get-credentials --resource-group ${RESOURCE_GROUP} --name ${CLUSTER_NAME}
+    silent: false
+
+
+
+  # https://stackoverflow.com/questions/69466101/how-to-get-hold-of-the-azure-kubernetes-cluster-outbound-ip-address
+  aks-public-ip:
+    cmds:
+      - |
+        echo "Select a K8s environment:"
+        ENVIRONMENT=$(kubectx | gum choose)
+        SUBSCRIPTION="fourscreen_${ENVIRONMENT}"
+        RESOURCE_GROUP="rg-aks-${ENVIRONMENT}"
+        IP_RESOURCE_GROUP="rg-aks-nodes-${ENVIRONMENT}"
+        CLUSTER_NAME="aks-${ENVIRONMENT}"
+        
+        az account set --subscription "${SUBSCRIPTION}"
+        ID=$(az aks show -g "${RESOURCE_GROUP}" -n "${CLUSTER_NAME}" --query networkProfile.loadBalancerProfile.effectiveOutboundIPs[].id -o tsv | awk -F'/' '{print $(NF)}')
+        az network public-ip show -g "${IP_RESOURCE_GROUP}" --name "${ID}" --query ipAddress -o tsv
+    silent: true
+    env:
+      ENVIRONMENT: na-int
+
+
+  enable-ipvs:
+    cmds:
+      - task: set-active-subscription
+      - |
+        az extension add --name aks-preview
+        az extension update --name aks-preview
+        az feature register --namespace "Microsoft.ContainerService" --name "KubeProxyConfigurationPreview"
+        az feature show --namespace "Microsoft.ContainerService" --name "KubeProxyConfigurationPreview"
+        # az provider register --namespace Microsoft.ContainerService
+    silent: true
+
+  apply-kube-proxy-ipvs:
+    cmds:
+      - task: set-active-subscription
+      - |
+        RESOURCE_GROUP=$(az aks list --output json | jq -r '.[].name')
+        CLUSTER_NAME=$(az aks list --output json | jq -r '.[].resourceGroup')
+        az aks update -n ${CLUSTER_NAME} --kube-proxy-config ./azure/kube-proxy.json
+    silent: true
+
+  list-lications:
+    cmd: az account list-locations -o yaml | yq '.[].name'
+    silent: true
+
+  login-terraform-service-principal:
+    cmds:
+      - |
+        ENVIRONMENT=$(gum choose na-int na-prod emea-dev emea-int emea-prod common)
+        CLIENT_ID=$(vault kv get --field=client_id "secret/${ENVIRONMENT}/unmanaged/azure/terraform")
+        CLIENT_SECRET=$(vault kv get --field=client_secret "secret/${ENVIRONMENT}/unmanaged/azure/terraform")
+        TENANT_ID=$(vault kv get --field=tenant_id "secret/${ENVIRONMENT}/unmanaged/azure/terraform")
+      
+        az login --service-principal -u "${CLIENT_ID}" -p "${CLIENT_SECRET}" --tenant "${TENANT_ID}"
+        az ad signed-in-user show
+    silent: true
+
+  role-assignment:
+    cmds:
+      - |
+        ENVIRONMENT=$(gum choose na-int na-prod emea-dev emea-int emea-prod common)
+        SUBSCRIPTION_ID=$(vault kv get --field=subscription_id "secret/${ENVIRONMENT}/unmanaged/azure/terraform")
+        RESOURCE_GROUP="rg-aks-nodes-${ENVIRONMENT}"
+        ROLE="Reader"
+        
+        echo "Select the target environment:"
+        TARGET_ENVIRONMENT=$(gum choose na-int na-prod emea-dev emea-int emea-prod common)
+        ASSIGNEE=$(vault kv get --field=client_id "secret/${TARGET_ENVIRONMENT}/unmanaged/azure/terraform")        
+        az role assignment create --scope /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP} --role Reader --assignee ${ASSIGNEE}
+    silent: true
+
+  create-cross-region-lb:
+    cmd: |
+      RESOURCE_GROUP="rg-aks-nodes-emea-int"
+      
+      
+      
+      echo "Fetching regionId from emea"
+      region1id=$(az network lb frontend-ip show \
+          --lb-name kubernetes \
+          --name a7142474ed13347bdab159145f131626 \
+          --resource-group rg-aks-nodes-emea-int \
+          --query id \
+          --output tsv)
+      echo "Fetched!"
+
+      echo "Adding emea into the global load balancer..."
+      az network cross-region-lb address-pool address add \
+        --frontend-ip-address $region1id \
+        --lb-name kubernetes \
+        --name myFrontEnd-R1 \
+        --pool-name kubernetes \
+        --resource-group ${RESOURCE_GROUP}
+      echo "Added!"
+
+      echo "Fetching regionId from na"
+      region2id=$(az network lb frontend-ip show \
+        --lb-name kubernetes \
+        --name a55a293c8fdb84e979af07da4ec4476c \
+        --resource-group rg-aks-nodes-na-int \
+        --query id \
+        --output tsv --subscription fourscreen_na-int)
+      echo "Fetched"
+
+      echo "Adding NA into the global load balancer..."
+      az network cross-region-lb address-pool address add \
+        --frontend-ip-address $region2id \
+        --lb-name kubernetes \
+        --name myFrontEnd-R2 \
+        --pool-name kubernetes \
+        --resource-group ${RESOURCE_GROUP}
+      echo "Added!"
+    silent: true
+
+#    echo "Creating load balancer..."
+#    az network cross-region-lb create \
+#    --name global-lb-CR \
+#    --resource-group ${RESOURCE_GROUP} \
+#    --frontend-ip-name global-frontend-ip-CR \
+#    --backend-pool-name global-backend-pool-CR
+#    echo "Load balancer created!"
+
+
+#
+#    echo "Creating rules..."
+#    az network cross-region-lb rule create \
+#    --backend-port 80 \
+#    --frontend-port 80 \
+#    --lb-name kubernetes \
+#    --name myHTTPRule-CR \
+#    --protocol tcp \
+#    --resource-group ${RESOURCE_GROUP} \
+#    --backend-pool-name global-backend-pool-CR \
+#    --frontend-ip-name global-frontend-ip-CR
+#    echo "Rules created!"
+
+    service-principal-github-action:
+      cmds: |
+        az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"portal-/agithub-action-secret","issuer":"https://token.actions.githubusercontent.com","subject":"repo:4screen/portal:environment:EMEA-DEV","description":"Portal Blobstorage/CDN deployment","audiences":["api://AzureADTokenExchange"]}'

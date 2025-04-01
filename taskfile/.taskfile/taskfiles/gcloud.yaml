@@ -1,0 +1,31 @@
+version: '3'
+
+tasks:
+  setup-terraform-service-account:
+    cmds:
+      - |
+        PROJECT=$(gcloud projects list --format=json | jq -r  '.[].projectId' | gum choose)
+        echo "Selected project is ${PROJECT}"
+        
+        gcloud services enable iam.googleapis.com --project ${PROJECT}
+        gcloud services enable cloudresourcemanager.googleapis.com --project ${PROJECT}
+      
+        SERVICE_ACCOUNT=$(gcloud iam service-accounts list --project ${PROJECT} --format=json --filter="displayName=terraform" | jq -r '.[].email')
+        echo "Service Account is ${SERVICE_ACCOUNT}"
+        
+        gcloud projects add-iam-policy-binding $PROJECT \
+        --member=serviceAccount:$SERVICE_ACCOUNT \
+        --role=roles/storage.admin
+        
+        gcloud projects add-iam-policy-binding $PROJECT \
+        --member=serviceAccount:$SERVICE_ACCOUNT \
+        --role=roles/iam.serviceAccountAdmin
+        
+        gcloud projects add-iam-policy-binding $PROJECT \
+        --member=serviceAccount:$SERVICE_ACCOUNT \
+        --role=roles/resourcemanager.projectIamAdmin
+        
+        gcloud projects add-iam-policy-binding $PROJECT \
+        --member=serviceAccount:$SERVICE_ACCOUNT \
+        --role=roles/owner
+    silent: true

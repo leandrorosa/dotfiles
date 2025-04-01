@@ -1,0 +1,44 @@
+
+version: "3"
+
+tasks:
+
+  tgz-all:
+    desc: Compresses all files in the current folder individually
+    cmds:
+      - find . -type f -exec tar czvf {}.tgz {} \;
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  view-eml:
+    cmds:
+      - munpack -t -C "$(dirname "$(pwd)/{{.CLI_ARGS}}")" "$(pwd)/{{.CLI_ARGS}}"
+      - |
+        decoded_parts=( "$(dirname "$(pwd)/{{.CLI_ARGS}}")"/part* )
+        cat part1
+        rm "${decoded_parts[@]}"
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  ncdu:
+    cmds:
+      - ncdu
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  disk-usage:
+    desc: "NCurses Disk Usage"
+    cmds:
+      - df -h
+    silent: true
+
+  top:
+    cmds:
+      - gtop
+    silent: true
+
+  open-browser:
+    internal: true
+    silent: true
+    cmds:
+      - open "{{ .URL }}"

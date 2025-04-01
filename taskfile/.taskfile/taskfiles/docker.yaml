@@ -1,0 +1,118 @@
+
+version: '3'
+
+tasks:
+
+  stop-all-containers:
+    description: "Stop all running containers"
+    cmd: docker stop $(docker ps -a -q)
+
+  remove-all-containers:
+    cmd: docker rm $(docker ps -a -q)
+
+  remove-all-images:
+    cmd: docker rmi -f $(docker images -q)
+
+  remove-all-volumes:
+    cmd: docker volume rm $(docker volume ls -q)
+
+  create-network:
+    silent: true
+    cmds:
+      - docker network create --driver bridge my-net
+
+
+  create-postgres-container:
+    silent: true
+    cmds:
+      - task: stop-and-remove-container
+        vars:
+          CONTAINER_NAME: postgres
+      - task: stop-and-remove-container
+        vars:
+          CONTAINER_NAME: pgadmin
+      - |
+        mkdir -p $HOME/docker/postgres/data
+        docker create --name postgres --network=my-net -e POSTGRES_PASSWORD=postgres  -p 5432:5432 -v $HOME/docker/postgres/data:/var/lib/postgresql/data imresamu/postgis:16-3.4-alpine3.20
+        docker start postgres
+        
+        until docker exec -t postgres pg_isready -U postgres; do
+          echo "Waiting for postgres to be ready..."
+          sleep 2
+        done
+      - task: create-postgres-db
+      - task: create-postgres-user
+      - |
+        # Create the JSON structure
+        mkdir -p $HOME/docker/pgadmin/
+        echo '{
+          "Servers": {
+            "1": {
+              "Name": "localhost",
+              "Group": "Servers",
+              "Host": "postgres",
+              "Port": 5432,
+              "MaintenanceDB": "postgres",
+              "Username": "postgres"
+            }
+          }
+        }' > $HOME/docker/pgadmin/servers.json
+        
+        docker create --name pgadmin --network=my-net -p 5050:80 -e PGADMIN_DEFAULT_EMAIL="leandro.rosa@4screen.com" -e PGADMIN_DEFAULT_PASSWORD=pgadmin -v $HOME/docker/pgadmin/servers.json:/pgadmin4/servers.json dpage/pgadmin4:latest
+        docker start pgadmin
+
+  create-postgres-db:
+    internal: true
+    silent: true
+    cmds:
+      - |
+        docker exec -t postgres psql -U postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'supply-provisioning-service'" | grep -q 1 || docker exec -t postgres psql -U postgres -c "CREATE DATABASE \"supply-provisioning-service\""
+
+  create-postgres-user:
+    internal: true
+    silent: true
+    cmds:
+      - |
+        DB_USER="supply-provisioning-service"
+        docker exec -t postgres psql -U postgres -tc "SELECT 1 FROM pg_roles WHERE rolname = '${DB_USER}'" | grep -q 1 || docker exec -t postgres psql -U postgres -c "CREATE USER \"${DB_USER}\" WITH PASSWORD '${DB_USER}'"
+        
+        ## Grant usage on the schema
+        docker exec -t postgres psql -U postgres -tc "GRANT USAGE ON SCHEMA public TO \"${DB_USER}\";"
+
+        ## Grant all privileges on all tables in the schema
+        docker exec -t postgres psql -U postgres -tc "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"${DB_USER}\";"
+
+        ## Grant all privileges on all sequences in the schema
+        docker exec -t postgres psql -U postgres -tc "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"${DB_USER}\";"
+
+        ## Grant all privileges on all functions in the schema
+        docker exec -t postgres psql -U postgres -tc "GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO \"${DB_USER}\";"
+  
+
+  create-kafka-container:
+    silent: true
+    cmds:
+      - task: stop-and-remove-container
+        vars:
+          CONTAINER_NAME: kafka
+      # ref: https://hellokube.dev/posts/three-ways-zookeepeerless-kafka/
+      - |
+        docker create --name kafka --network=my-net -p 9092:9092 -e LOG_DIR=/tmp/logs quay.io/strimzi/kafka:latest-kafka-3.8.0  /bin/sh -c 'export CLUSTER_ID=$(bin/kafka-storage.sh random-uuid) && bin/kafka-storage.sh format -t $CLUSTER_ID -c config/kraft/server.properties && bin/kafka-server-start.sh config/kraft/server.properties'
+        docker start kafka
+        until docker exec -t kafka bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092; do
+          echo "Waiting for Kafka to be ready..."
+          sleep 2
+        done
+        
+        docker exec -t kafka bin/kafka-topics.sh --create --topic "analytics.fct.offer-request-response.v1"  --partitions 1 --replication-factor 1 --bootstrap-server localhost:9092
+        docker exec -t kafka bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+
+  stop-and-remove-container:
+    silent: true
+    cmds:
+      - docker stop {{ .CONTAINER_NAME }} 2> /dev/null || true
+      - docker rm {{ .CONTAINER_NAME }} 2> /dev/null || true
+    internal: true
+
+
+

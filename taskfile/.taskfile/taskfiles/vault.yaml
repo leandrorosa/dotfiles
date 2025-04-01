@@ -1,0 +1,90 @@
+# https://taskfile.dev
+
+version: '3'
+
+env:
+  VAULT_AGENT_ADDR: https://vault.4screen.dev
+
+includes:
+  k8s:
+    taskfile: ./k8s.yaml
+    internal: true
+
+tasks:
+  login:
+    cmds:
+      - vault login -method=oidc
+    silent: true
+
+  # https://developer.hashicorp.com/vault/docs/auth/kubernetes
+  add-k8s-cluster:
+    cmds:
+      - task: k8s:switch-context
+      - |
+        ENVIRONMENT=$(gum input --placeholder="Environment")
+        
+        TOKEN=$(kubectl get secret external-secrets-sa-token -n external-secrets -o yaml | yq '.data.token' | base64 --decode)
+        KUBE_CA_CERT=$(kubectl config view --raw --flatten --minify | yq '.clusters[].cluster."certificate-authority-data"' | base64 --decode)
+        KUBE_HOST=$(kubectl config view --raw --minify --flatten | yq '.clusters[].cluster.server')
+        
+        vault write auth/k8s-${ENVIRONMENT}/config \
+          token_reviewer_jwt="${TOKEN}" \
+          kubernetes_host="${KUBE_HOST}" \
+          kubernetes_ca_cert="${KUBE_CA_CERT}"
+    silent: true
+
+  # https://developer.hashicorp.com/vault/docs/auth/kubernetes
+  add-airflow-dags-k8s-cluster:
+    cmds:
+      - task: k8s:switch-context
+      - |
+        ENVIRONMENT=$(gum input --placeholder="Environment")
+
+        TOKEN=$(kubectl get secret airflow-worker -n airflow -o yaml | yq '.data.token' | base64 --decode)
+        KUBE_CA_CERT=$(kubectl config view --raw --flatten --minify | yq '.clusters[].cluster."certificate-authority-data"' | base64 --decode)
+        KUBE_HOST=$(kubectl config view --raw --minify --flatten | yq '.clusters[].cluster.server')
+
+        vault write auth/k8s-${ENVIRONMENT}-airflow/config \
+          token_reviewer_jwt="${TOKEN}" \
+          kubernetes_host="${KUBE_HOST}" \
+          kubernetes_ca_cert="${KUBE_CA_CERT}"
+    silent: true
+
+  vsh:
+    description: "Vault Interactive shell: https://github.com/fishi0x01/vsh"
+    cmds:
+      - vsh
+    env:
+      VAULT_ADDR: https://vault.4screen.dev<
+      VAULT_TOKEN:
+        sh: vault token lookup -format=json | jq --raw-output '.data.id'
+
+
+
+  unseal:
+    silent: true
+    cmds:
+      - |
+        curl --silent -X PUT \
+          http://vault.4screen.dev/v1/sys/unseal \
+          -H 'cache-control: no-cache' \
+          -H 'content-type: application/json' \
+          -d '{
+          "key": "u69UN6TnvI7Br9H/5e55kCB09n8fVLj/2ohkYH//tpIh"
+        }'
+        
+        curl --silent -X PUT \
+          http://vault.4screen.dev/v1/sys/unseal \
+          -H 'cache-control: no-cache' \
+          -H 'content-type: application/json' \
+          -d '{
+          "key": "v4UWzsiHYJw9yOKaaLn8Be0sd5XwLBLjZtAswvAT7TPE"
+        }'
+        
+        curl --silent -X PUT \
+          http://vault.4screen.dev/v1/sys/unseal \
+          -H 'cache-control: no-cache' \
+          -H 'content-type: application/json' \
+          -d '{
+          "key": "g91jSTKeGQjO2A5QGdWzGYWGzL6UVEbtZ2GxArHzG5Wn"
+        }'

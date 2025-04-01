@@ -1,0 +1,283 @@
+# https://taskfile.dev
+
+version: '3'
+
+
+tasks:
+
+  list-ctx:
+    desc: List available k8s contexts
+    cmds:
+      - kubecolor config get-contexts
+    silent: true
+
+  list-ns:
+    desc: List available k8s namespaces
+    cmds:
+      - kubecolor get namespaces
+    silent: true
+
+  force-quit-telepresence:
+    cmds:
+      - echo "If telepesence fails to quit, run the 'telepresence-upgrade' task"
+      - telepresence quit -s
+    silent: true
+
+  switch-context:
+    desc: Change the active context to emea-dev
+    cmds:
+      - |
+        echo "Select a k8s context:"
+        CONTEXT=$(kubectx | gum choose)
+        echo "You have chosen ${CONTEXT}"
+        
+        K8S_CURRENT_CONTEXT=$(kubectl config current-context)
+        if [ "${K8S_CURRENT_CONTEXT}" != "${CONTEXT}" ]; then
+          kubectl config use-context ${CONTEXT}
+        fi
+        
+        TELEPRESENCE_CONNECTED_CLUSTER=$(telepresence status --output yaml | yq -r '.user_daemon | select(.running == true) | .kubernetes_context')
+        if [ "${TELEPRESENCE_CONNECTED_CLUSTER}" != "${CONTEXT}" ]; then
+          echo "If telepresence fails to quit, run the 'telepresence-upgrade' task"
+          telepresence quit && telepresence connect --context ${CONTEXT}
+        fi
+    silent: true
+    internal: false
+
+  kubens:
+    desc: Change the active namespace
+    cmds:
+      - kubectl config set-context --current --namespace={{.CLI_ARGS}}
+    silent: true
+    env:
+      NAMESPACE:
+        sh: gum choose $(kubectl get namespaces -o=jsonpath='{.items[*].metadata.name}' | tr ' ' '\n')
+
+  pod-logs:
+    cmds:
+      - POD=$(gum choose $(kubectl get pods -o custom-columns=NAME:.metadata.name)) kubectl logs $POD -f
+
+  # watch pods
+  pods-watch:
+    cmds:
+      - |
+        watch --color kubecolor get pods --force-colors {{.CLI_ARGS}}
+    silent: true
+
+  refresh-external-secrets:
+    desc: Trigger refresh for all failed ExternalSecrets in the cluster
+    cmds:
+      - task: switch-context
+      - |
+        for n in $(kubectl get ns -o yaml | yq '.items[].metadata.name'); do
+          echo "Searching for ExternalSecrets in namespace $n..."
+          for e in $(kubectl get es --namespace=$n -o yaml | yq '.items[] | select(.status.conditions[0].status != "True") | .metadata.name'); do 
+            echo "ExternalSecret $e is out of sync, refreshing it..."
+            kubectl annotate es $e force-sync=$(date +%s) --overwrite --namespace=$n
+          done
+        done
+    silent: true
+
+  refresh-push-secrets:
+    desc: Trigger refresh for all failed PushSecrets in the cluster
+    cmds:
+      - task: switch-context
+      - |
+        for n in $(kubectl get ns -o yaml | yq '.items[].metadata.name'); do 
+          kubectl config set-context --current --namespace=$n 
+          for e in $(kubectl get pushsecret -o yaml | yq '.items[] | select(.status.conditions[0].status != "True") | .metadata.name'); do 
+            echo "PushSecret $e is out of sync, refreshing it..."
+            kubectl annotate pushsecret $e force-sync=$(date +%s) --overwrite
+          done
+        done
+    silent: true
+
+  kubent:
+    desc: Check the cluster for deprecated API's
+    cmds:
+      - task: switch-context
+      - |
+        echo "Choose a target Kubernetes version:"
+        K8S_VERSION=$(gum input --placeholder="Kubernetes version")
+        kubent -t "${K8S_VERSION}"
+    silent: true
+
+
+
+  open-browser:
+    internal: true
+    silent: true
+    cmds:
+      - open {{ .URL }}
+
+
+
+  telepresence-install:
+    silent: true
+    cmds:
+      - task: switch-context
+      - telepresence helm install
+
+  telepresence-upgrade:
+    cmds:
+      - brew upgrade telepresence
+      - telepresence quit -s
+
+
+  kustomize-render:
+    cmds:
+      - kustomize build . --enable-helm >> {{.CLI_ARGS}}.yaml
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+
+  validate-sa-token:
+    cmds:
+      - kubectl gete
+      - kubectl get secret external-secrets-sa-token -o yaml | yq '.data.token' | base64 --decode
+
+  edit-kubeconfig:
+    cmds:
+      - code ~/.kube/config
+
+
+  lens:
+    cmds:
+      - open http://localhost:8001/static/index.html
+      - kubectl proxy -w .
+    dir: '/Users/leandrorosa/src/github.com/mac2000/lens'
+
+  emissary-ingress-manifest:
+    cmds:
+      - task: switch-context
+      - |
+        NAMESPACE=$(gum choose $(kubectl get ns -o yaml | yq '.items[].metadata.name'))
+        POD=$(gum choose $(kubectl get pods -n "${NAMESPACE}" -o yaml | yq '.items[].metadata.name'))
+        CONTAINER=$(gum choose $(kubectl get pods -n "${NAMESPACE}" "${POD}" -o jsonpath='{.spec.containers[*].name}'))
+        echo "executing kubectl exec..."
+        kubectl exec -n "${NAMESPACE}" -it "${POD}" -c "${CONTAINER}" -- tar -czf /tmp/ambassador.tgz /ambassador --exclude=secrets-decoded --exclude=webui --exclude=sidecars 
+        
+        echo "executing kubectl cp..."
+        kubectl cp -n "${NAMESPACE}" -c "${CONTAINER}" "${POD}":/tmp/ambassador.tgz ambassador.tgz
+    silent: true
+
+  render-prometheus-config:
+    cmds:
+      - task: switch-context
+      - |
+        kubectl -n prometheus get secret prometheus-prometheus-kube-prometheus-prometheus -ojson | jq -r '.data["prometheus.yaml.gz"]' | base64 -d | gzip --uncompress > prometheus.yaml
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  open-k9s-logs:
+    cmds:
+      - open /var/folders/t6/b9pxd_gs7p597051wqkpj64w0000gn/T/k9s-screens-leandrorosa
+    silent: true
+
+  trivy-namespace-report:
+    cmds:
+      - |
+        CONTEXT=$(kubectx | gum choose)
+        NAMESPACE=$(gum choose $(kubectl get ns -o yaml | yq '.items[].metadata.name'))
+        OUTPUT_FILE="trivy-k8s-${CONTEXT}-${NAMESPACE}.txt"
+        trivy k8s --context ${CONTEXT} -n ${NAMESPACE} -o ${OUTPUT_FILE} --report all all
+        open "${OUTPUT_FILE}"
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  count-nodes-with-version:
+    cmds:
+      - |
+        kubectl get nodes -o yaml | yq -r '.items[].status.nodeInfo.kubeletVersion | select(. != "v1.28.3")' | wc -l
+    silent: true
+
+  kill-container:
+    cmds:
+      - |
+        CONTEXT=$(kubectx | gum choose)
+        NAMESPACE=$(gum choose $(kubectl get ns --context ${CONTEXT} -o yaml | yq '.items[].metadata.name' ))
+        POD=$(gum choose $(kubectl get pods -n "${NAMESPACE}" --context ${CONTEXT} -o yaml | yq '.items[].metadata.name'))
+        CONTAINER=$(gum choose $(kubectl get pods -n "${NAMESPACE}" "${POD}" --context ${CONTEXT} -o jsonpath='{.spec.containers[*].name}'))
+        kubectl exec -n ${NAMESPACE} --context ${CONTEXT} ${POD} -c ${CONTAINER} -- /bin/sh -c "kill 1"
+    silent: true
+
+  list-node-zones:
+    silent: true
+    cmds:
+      - |
+        CONTEXT=$(kubectx | gum choose)
+        kubectl get nodes --context "${CONTEXT}" -o yaml | yq '.items[].metadata.labels."topology.kubernetes.io/zone"' | sort | uniq
+
+  list-namespaces-per-nodepool:
+    silent: true
+    cmds:
+      - |
+        CONTEXT=$(kubectx | gum choose)
+        
+        # Define your label key and value
+        LABEL_KEY="agentpool"
+        LABEL_VALUE="$(gum choose default analytics microservice)"
+
+        # Step 1: Get the nodes with the specific label
+        NODES=$(kubectl get nodes -l ${LABEL_KEY}=${LABEL_VALUE} --context ${CONTEXT} -o=jsonpath='{.items[*].metadata.name}')
+
+        # Step 2 & 3: Get pods on those nodes and extract the unique namespaces
+        if [ -n "$NODES" ]; then
+          kubectl get pods --all-namespaces --context ${CONTEXT} -o wide | grep -E "$(echo $NODES | sed 's/ /|/g')" | awk '{print $1}' | sort | uniq
+        else
+          echo "No nodes found with label ${LABEL_KEY}=${LABEL_VALUE}"
+        fi
+
+  trivy-license-scan:
+    silent: true
+    cmds:
+      - |
+        CONTEXT=$(kubectx | gum choose)
+        NAMESPACE=$(gum choose $(kubectl get ns --context ${CONTEXT} -o yaml | yq '.items[].metadata.name' ))
+        OUTPUT_FILE="trivy-license-scan-${CONTEXT}-${NAMESPACE}.txt"
+        trivy k8s --context ${CONTEXT} -n ${NAMESPACE} -o ${OUTPUT_FILE} --scan-type license
+        open "${OUTPUT_FILE}"
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+
+  drain-node:
+    silent: true
+    cmds:
+      - |
+        CONTEXT=$(kubectx | gum choose)
+        NODE=$(gum choose $(kubectl get nodes --context ${CONTEXT} -o yaml | yq '.items[].metadata.name'))
+        kubecolor drain ${NODE} --ignore-daemonsets --delete-emptydir-data --grace-period=300 --context ${CONTEXT}
+
+  list-node-images:
+    silent: true
+    cmds:
+      - |
+        CONTEXT=$(kubectx | gum choose)
+        for node in $(kubectl get nodes --context ${CONTEXT} -o jsonpath='{.items[*].metadata.name}'); do
+          image=$(kubectl get nodes ${node} --context ${CONTEXT} -o yaml | yq '.metadata.labels."kubernetes.azure.com/node-image-version"')
+          echo "Node: ${node} - Image: ${image}"
+        done
+
+  list-pod-images:
+  silent: true
+  cmds:
+    - |
+      CONTEXT=$(kubectx | gum choose)
+      k get pods -A -o yaml | yq '.items[].spec.containers[].image'
+
+  list-critical-rules:
+    silent: true
+    cmds:
+      - |
+        kubecolor get prometheusrules -A -o json | jq '.items[].spec.groups[].rules[] | select(.labels.severity == "critical") | {name: .alert, severity: .labels.severity, expression: .expr}'
+
+  force-delete-namespace:
+    silent: true
+    cmds:
+      - |
+        CONTEXT=$(kubectx | gum choose)
+        NAMESPACE=$(kubecolor get ns | gum choose)
+        kubectl get namespace $NAMESPACE -o json \
+          tr -d "\n" | sed "s/\"finalizers\": \[[^]]\+\]/\"finalizers\": []/" \
+          kubectl replace --raw /api/v1/namespaces/$NAMESPACE/finalize -f -
+
+      

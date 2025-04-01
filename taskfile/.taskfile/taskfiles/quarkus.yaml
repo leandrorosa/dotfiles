@@ -1,0 +1,12 @@
+version: "3"
+
+tasks:
+  create-kotlin-cli:
+    cmds:
+      -  quarkus create cli --gradle-kotlin-dsl --kotlin org.lrosa:{{.CLI_ARGS}}
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  create-cli:
+    cmds:
+      - quarkus create cli --gradle-kotlin-dsl org.lrosa:{{.CLI_ARGS}}
+    dir: '/{{ .USER_WORKING_DIR }}'

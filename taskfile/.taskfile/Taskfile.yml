@@ -1,0 +1,89 @@
+# https://taskfile.dev
+
+version: '3'
+
+includes:
+  util: taskfiles/util.yaml
+  k8s:
+    taskfile: taskfiles/k8s.yaml
+    aliases:
+      - k
+  terraform:
+    taskfile: taskfiles/terraform.yaml
+    aliases:
+      - tf
+  azure:
+    taskfile: taskfiles/azure.yaml
+    aliases:
+      - az
+  postgres:
+    taskfile: taskfiles/postgres.yaml
+    aliases:
+      - pg
+  aiven:
+    taskfile: taskfiles/aiven.yaml
+    aliases:
+      - avn
+  vault: taskfiles/vault.yaml
+  java:
+    taskfile: taskfiles/java.yaml
+    aliases:
+      - j
+  brew:
+    taskfile: taskfiles/brew.yaml
+  linkerd:
+    taskfile: taskfiles/linkerd.yaml
+  git:
+    taskfile: taskfiles/git.yaml
+    aliases:
+      - g
+  go:
+    taskfile: taskfiles/go.yaml
+
+  loki:
+    taskfile: taskfiles/loki.yaml
+
+  redis:
+    taskfile: taskfiles/redis.yaml
+
+  quarkus:
+    taskfile: taskfiles/quarkus.yaml
+
+  spring:
+    taskfile: taskfiles/spring.yaml
+
+  tempo:
+    taskfile: taskfiles/tempo.yaml
+
+  mac:
+    taskfile: taskfiles/mac.yaml
+
+  gcloud:
+    taskfile: taskfiles/gcloud.yaml
+
+  kind:
+    taskfile: taskfiles/kind.yaml
+
+  minikube:
+    taskfile: taskfiles/minikube.yaml
+
+  docker:
+    taskfile: taskfiles/docker.yaml
+
+  ollama:
+    taskfile: taskfiles/ollama.yaml
+
+  4screen:
+    taskfile: taskfiles/4screen.yaml
+
+  argocd:
+    taskfile: taskfiles/argocd.yaml
+
+  kafka:
+    taskfile: taskfiles/kafka.yaml
+
+  mimir:
+    taskfile: taskfiles/mimir.yaml
+
+  alloy:
+    taskfile: taskfiles/alloy.yaml

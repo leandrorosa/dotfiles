@@ -1,0 +1,57 @@
+
+version: '3'
+
+tasks:
+  set-keys-like-linux:
+    cmds:
+      - |
+        mkdir -p $HOME/Library/KeyBindings
+        echo '{
+        /* Remap Home / End keys to be correct */
+        "\UF729" = "moveToBeginningOfLine:"; /* Home */
+        "\UF72B" = "moveToEndOfLine:"; /* End */
+        "$\UF729" = "moveToBeginningOfLineAndModifySelection:"; /* Shift + Home */
+        "$\UF72B" = "moveToEndOfLineAndModifySelection:"; /* Shift + End */
+        "^\UF729" = "moveToBeginningOfDocument:"; /* Ctrl + Home */
+        "^\UF72B" = "moveToEndOfDocument:"; /* Ctrl + End */
+        "$^\UF729" = "moveToBeginningOfDocumentAndModifySelection:"; /* Shift + Ctrl + Home */
+        "$^\UF72B" = "moveToEndOfDocumentAndModifySelection:"; /* Shift + Ctrl + End */
+        }' > $HOME/Library/KeyBindings/DefaultKeyBinding.dict
+
+  disconnect-moondrop-space-travel:
+    silent: true
+    cmds:
+      - |
+        MAC_ADDRESS="23-11-07-b3-ac-b5"
+        
+        # Check if the device is currently connected
+        DEVICE_CONNECTED=$(blueutil --is-connected "$MAC_ADDRESS")
+        
+        if [ "$DEVICE_CONNECTED" -eq 1 ]; then
+          echo "Disconnecting device with MAC address $MAC_ADDRESS..."
+          blueutil --disconnect "$MAC_ADDRESS"
+        
+          if [ $? -eq 0 ]; then
+            echo "Device disconnected successfully."
+          else
+            echo "Failed to disconnect the device."
+          fi
+        else
+          echo "Device with MAC address $MAC_ADDRESS is not currently connected."
+        fi
+
+  connect-moondrop-space-travel:
+    silent: true
+    cmds:
+      - |
+        MAC_ADDRESS="23-11-07-b3-ac-b5"
+
+        # Attempt to connect to the Bluetooth device
+        echo "Connecting to device with MAC address $MAC_ADDRESS..."
+        blueutil --connect "$MAC_ADDRESS"
+        
+        if [ $? -eq 0 ]; then
+          echo "Device connected successfully."
+        else
+          echo "Failed to connect the device."
+        fi

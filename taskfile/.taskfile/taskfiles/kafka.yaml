@@ -1,0 +1,71 @@
+version: 3
+
+includes:
+  k8s:
+    taskfile: ./k8s.yaml
+    internal: true
+
+tasks:
+
+  list-consumer-groups:
+    cmds:
+      - task: k8s:switch-context
+      - |
+        ENVIRONMENT=$(gum choose emea-dev emea-int emea-prod --header="Environment")
+        KAFKA_HOST=$(vault kv get -field=host-private-link secret/${ENVIRONMENT}/aiven/kafka/read)
+        USER=$(vault kv get -field=user secret/${ENVIRONMENT}/aiven/kafka/read)
+        PASSWORD=$(vault kv get -field=password secret/${ENVIRONMENT}/aiven/kafka/read)
+        TRUSTSTORE_PASSWORD=$(vault kv get -field=trust-store-password secret/${ENVIRONMENT}/aiven/kafka/read)
+        
+        vault kv get -field="client.truststore.jks" secret/${ENVIRONMENT}/aiven/kafka/read | base64 -d > truststore.jks 
+        
+        echo "
+        bootstrap.servers=${KAFKA_HOST}
+        security.protocol=SASL_SSL
+        sasl.mechanism=PLAIN
+        sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="${USER}" password="${PASSWORD}";
+        ssl.endpoint.identification.algorithm=
+        ssl.truststore.type=JKS
+        ssl.truststore.location=./truststore.jks
+        ssl.truststore.password=${TRUSTSTORE_PASSWORD}
+        " > kafka.properties
+        
+        kafka-consumer-groups --bootstrap-server "$KAFKA_HOST" --list --command-config "kafka.properties"
+        
+        rm kafka.properties
+
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'
+
+  delete-consumer-group:
+    cmds:
+      - task: k8s:switch-context
+      - |
+        ENVIRONMENT=$(gum choose emea-dev emea-int emea-prod --header="Environment")
+        KAFKA_HOST=$(vault kv get -field=host-private-link secret/${ENVIRONMENT}/aiven/kafka/read)
+        USER=$(vault kv get -field=user secret/${ENVIRONMENT}/aiven/kafka/read)
+        PASSWORD=$(vault kv get -field=password secret/${ENVIRONMENT}/aiven/kafka/read)
+        TRUSTSTORE_PASSWORD=$(vault kv get -field=trust-store-password secret/${ENVIRONMENT}/aiven/kafka/read)
+
+        vault kv get -field="client.truststore.jks" secret/${ENVIRONMENT}/aiven/kafka/read | base64 -d > truststore.jks 
+
+
+        echo "
+        bootstrap.servers=${KAFKA_HOST}
+        security.protocol=SASL_SSL
+        sasl.mechanism=PLAIN
+        sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="${USER}" password="${PASSWORD}";
+        ssl.endpoint.identification.algorithm=
+        ssl.truststore.type=JKS
+        ssl.truststore.location=./truststore.jks
+        ssl.truststore.password=${TRUSTSTORE_PASSWORD}
+        " > kafka.properties
+
+        CONSUMER_GROUP=$(gum choose $(kafka-consumer-groups --bootstrap-server "$KAFKA_HOST" --list --command-config "kafka.properties"))
+        kafka-consumer-groups --bootstrap-server "$KAFKA_HOST" --delete --group "$CONSUMER_GROUP" --command-config "kafka.properties"
+        
+        rm truststore.jks
+        rm kafka.properties
+
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'

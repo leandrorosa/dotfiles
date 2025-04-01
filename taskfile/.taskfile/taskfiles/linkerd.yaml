@@ -1,0 +1,59 @@
+version: '3'
+
+tasks:
+
+    multicluster-connect:
+        cmds:
+            - |
+                echo "Disconnect two k8s clusters using linkerd"
+                
+                echo "K8S_SOURCE: cluster that will have it services exposed"
+                K8S_SOURCE=$(kubectx | gum choose)
+                
+                echo "K8S_DESTINATION: cluster that will connect to the source cluster"
+                K8S_DEST=$(kubectx | gum choose)
+                
+                echo "SELECTOR_VALUE: label value to use to filter the mirroring"
+                SELECTOR_VALUE=$(gum input --value="true")
+                
+                echo "Applying..."
+                echo "K8S_SOURCE=${K8S_SOURCE}"
+                echo "K8S_DEST=${K8S_DEST}"
+                echo "SELECTOR=${SELECTOR_VALUE}"
+                
+                linkerd --context ${K8S_SOURCE} multicluster link --cluster-name ${K8S_SOURCE} --selector "mirror.linkerd.io/exported=${SELECTOR_VALUE}" | kubectl --context ${K8S_DEST} apply -f -
+#        linkerd --context ${K8S_SOURCE} multicluster link --cluster-name ${K8S_SOURCE} --selector "mirror.linkerd.io/exported=${SELECTOR_VALUE}" | kubectl --context ${K8S_DEST} apply -f -
+        silent: true
+
+    multicluster-disconnect:
+        cmds:
+            - |
+                echo "Disconnect two k8s clusters using linkerd"
+                
+                echo "K8S_SOURCE: cluster that will have it services exposed"
+                K8S_SOURCE=$(kubectx | gum choose)
+                
+                echo "K8S_DESTINATION: cluster that will connect to the source cluster"
+                K8S_DEST=$(kubectx | gum choose)
+                
+                echo "SELECTOR_VALUE: label value to use to filter the mirroring"
+                SELECTOR_VALUE=$(gum input --value="true")
+                
+                echo "Applying..."
+                echo "K8S_SOURCE=${K8S_SOURCE}"
+                echo "K8S_DEST=${K8S_DEST}"
+                echo "SELECTOR=${SELECTOR_VALUE}"
+                
+                linkerd --context ${K8S_SOURCE} multicluster link --cluster-name ${K8S_SOURCE} --selector "mirror.linkerd.io/exported=${SELECTOR_VALUE}" | kubectl --context ${K8S_DEST} delete -f -
+        silent: true
+
+
+    check:
+        silent: true
+        cmds:
+            - |
+                echo "Select a K8s cluster to check:"
+                K8S_SOURCE=$(kubectx | gum choose)
+                linkerd check --context "${K8S_SOURCE}" -o short
+                linkerd multicluster gateways --context "${K8S_SOURCE}" -o short
+

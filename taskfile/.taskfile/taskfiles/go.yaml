@@ -1,0 +1,9 @@
+version: 3
+
+tasks:
+
+  go-build:
+    cmds:
+      - go build main.go
+    silent: true
+    dir: '/{{ .USER_WORKING_DIR }}'

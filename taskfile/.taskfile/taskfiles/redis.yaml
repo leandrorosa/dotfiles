@@ -1,0 +1,51 @@
+version: "3"
+
+includes:
+  k8s:
+    taskfile: ./k8s.yaml
+    internal: true
+
+
+tasks:
+
+  redis-list-keys-int:
+    cmds:
+      - task: k8s:switch-context
+      - echo "redis-cli -u \"rediss://${REDIS_USER}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}\" \"KEYS\" \"*\""
+      - redis-cli -u "rediss://${REDIS_USER}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}" "KEYS" "*"
+    silent: true
+    env:
+      REDIS_USER:
+        sh: vault kv get --field=user secret/emea-int/aiven/redis
+      REDIS_PASSWORD:
+        sh: vault kv get --field=password secret/emea-int/aiven/redis
+      REDIS_HOST: redis-emea-int-fourscreen-emea-int.aivencloud.com
+      REDIS_PORT:
+        sh: vault kv get --field=port secret/emea-int/aiven/redis
+
+
+  redis-list-keys-dev:
+    cmds:
+      - task: k8s:switch-context
+      - redis-cli -u "rediss://${REDIS_USER}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}" "KEYS" "*"
+    silent: true
+    env:
+      REDIS_USER:
+        sh: vault kv get --field=user secret/emea-dev/aiven/redis
+      REDIS_PASSWORD:
+        sh: vault kv get --field=password secret/emea-dev/aiven/redis
+      REDIS_HOST: redis-proxy-service.aiven
+      REDIS_PORT:
+        sh: vault kv get --field=port secret/emea-dev/aiven/redis
+
+  dragon-fly-backup:
+    cmds:
+      - redis-cli SAVE
+      - scp /path/to/redis/data/dump.rdb user@backup-server:/path/to/backup/
+    silent: true
+
+  redis-restore:
+    cmds:
+      - redis-cli FLUSHALL
+      - cat /path/to/backup/dump.rdb | redis-cli --pipe
+    silent: true

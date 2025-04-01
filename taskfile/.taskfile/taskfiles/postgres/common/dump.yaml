@@ -1,0 +1,60 @@
+# https://taskfile.dev
+
+version: '3'
+
+
+includes:
+  k8s:
+    taskfile: ./../../k8s.yaml
+    internal: true
+
+tasks:
+  default:
+    cmds:
+      - task -a
+    silent: true
+
+  dump:
+    cmds:
+      - task: k8s:switch-context
+      - echo "Taking pg_dump from {{ .DATABASE }} on ${HOST}"
+      - mkdir -p common
+      - rm -f ./common/{{ .DATABASE }}.dump
+      - pg_dump --clean --if-exists -U "${USERNAME}" -h "${HOST}" -p "${PORT}" -d "{{ .DATABASE }}" -F p -f "./common/{{ .DATABASE }}.dump" -v
+      - echo "Dump generated ./common/{{ .DATABASE }}.dump"
+      - ls -lhs "./common/{{ .DATABASE }}.dump"
+    dir: '/{{ .USER_WORKING_DIR }}'
+    internal: true
+    silent: true
+    env:
+      HOST: postgres-proxy-service.aiven
+      PORT:
+        sh: vault kv get --field=port secret/common/aiven/postgres/admin
+      USERNAME:
+        sh: vault kv get --field=username secret/common/aiven/postgres/admin
+      PGPASSWORD:
+        sh: vault kv get --field=password secret/common/aiven/postgres/admin
+
+#  metabase-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: metabase-db
+#
+#  customer-metabase-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: customer-metabase-db
+
+#  apicurio-db:
+#    cmds:
+#      - task: dump
+#        vars:
+#          DATABASE: apicurio-db
+
+  keycloak-db:
+    cmds:
+      - task: dump
+        vars:
+          DATABASE: keycloak-db

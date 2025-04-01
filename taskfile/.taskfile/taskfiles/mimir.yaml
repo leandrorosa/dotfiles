@@ -1,0 +1,6 @@
+
+version: '3'
+
+tasks:
+  distributor-ring:
+    cmd: open http://mimir-distributed-ingester.mimir:8080/ingester/ring
