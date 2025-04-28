@@ -6,4 +6,5 @@ return {
     use_fancy_tab_bar = false,
     window_decorations = "RESIZE",
     font = wezterm.font "FiraCode Nerd Font",
+    font_size = 14
 }

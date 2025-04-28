@@ -36,11 +36,16 @@ tasks:
           kubectl config use-context ${CONTEXT}
         fi
         
-        TELEPRESENCE_CONNECTED_CLUSTER=$(telepresence status --output yaml | yq -r '.user_daemon | select(.running == true) | .kubernetes_context')
-        if [ "${TELEPRESENCE_CONNECTED_CLUSTER}" != "${CONTEXT}" ]; then
-          echo "If telepresence fails to quit, run the 'telepresence-upgrade' task"
-          telepresence quit && telepresence connect --context ${CONTEXT}
-        fi
+        kubevpn disconnect --all
+        kubevpn quit 
+        
+        kubevpn connect --lite=true --context ${CONTEXT} -n kubevpn
+        
+#        TELEPRESENCE_CONNECTED_CLUSTER=$(telepresence status --output yaml | yq -r '.user_daemon | select(.running == true) | .kubernetes_context')
+#        if [ "${TELEPRESENCE_CONNECTED_CLUSTER}" != "${CONTEXT}" ]; then
+#          echo "If telepresence fails to quit, run the 'telepresence-upgrade' task"
+#          telepresence quit && telepresence connect --context ${CONTEXT}
+#        fi
     silent: true
     internal: false
 
