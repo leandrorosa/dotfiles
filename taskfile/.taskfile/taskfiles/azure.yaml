@@ -25,24 +25,6 @@ tasks:
       - az feature list | jq '.[] | select(.name=="microsoft.ContainerService/NodeOsUpgradeChannelPreview")'
     silent: true
 
-  postgres-status-emea-dev:
-    cmds:
-      - az account set --subscription fourscreen_emea-dev
-      - az postgres server show -n 4screenpostgresqlserveremeadev --resource-group rg-dbserver-emea-dev | jq -r '.userVisibleState'
-    silent: true
-
-  postgres-status-emea-int:
-    cmds:
-      - az account set --subscription fourscreen_emea-int
-      - az postgres server show -n 4screenpostgresqlserveremeaint --resource-group rg-dbserver-emea-int | jq -r '.userVisibleState'
-    silent: true
-
-  postgres-status-emea-prod:
-    cmds:
-      - az account set --subscription fourscreen_emea-prod
-      - az postgres server show -n 4screenpostgresqlserveremeaprod --resource-group rg-dbserver-emea-prod | jq -r '.userVisibleState'
-    silent: true
-
   aks-get-upgrades:
     desc: List available upgrades for an AKS cluster (emea-dev)
     cmds:

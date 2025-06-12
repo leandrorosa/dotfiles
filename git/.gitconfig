@@ -4,7 +4,7 @@
 	name = Leandro Rosa
 	email = leandro.rosa@4screen.com
 [core]
-	editor = nvim
+	editor = vim
 	excludesfile = ~/.gitignore_global
 	ignorecase = false
 

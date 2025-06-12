@@ -10,7 +10,6 @@ tasks:
 
   redis-list-keys-int:
     cmds:
-      - task: k8s:switch-context
       - echo "redis-cli -u \"rediss://${REDIS_USER}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}\" \"KEYS\" \"*\""
       - redis-cli -u "rediss://${REDIS_USER}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}" "KEYS" "*"
     silent: true
@@ -26,7 +25,6 @@ tasks:
 
   redis-list-keys-dev:
     cmds:
-      - task: k8s:switch-context
       - redis-cli -u "rediss://${REDIS_USER}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}" "KEYS" "*"
     silent: true
     env:

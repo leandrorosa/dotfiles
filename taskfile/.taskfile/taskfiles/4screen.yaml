@@ -22,5 +22,4 @@ tasks:
 
   restart-unmeshed:
     cmds:
-      - task: k8s:switch-context
       - curl -X POST system-k8s-watcher-service.fourscreen:8080/api/system/v1/linkerd/restartUnmeshed

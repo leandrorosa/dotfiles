@@ -13,14 +13,12 @@ tasks:
   ui:
     silent: true
     cmds:
-      - task: k8s:switch-context
       - task: util:open-browser
         vars:
           URL: http://argocd-server.argocd/argo-cd/login
 
   login:
     cmds:
-      - task: k8s:switch-context
       - argocd login cd.argoproj.io --core
       - kubens argocd
     silent: true

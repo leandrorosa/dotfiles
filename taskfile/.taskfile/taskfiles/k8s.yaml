@@ -36,16 +36,9 @@ tasks:
           kubectl config use-context ${CONTEXT}
         fi
         
-        kubevpn disconnect --all
-        kubevpn quit 
-        
+        kubevpn quit
         kubevpn connect --lite=true --context ${CONTEXT} -n kubevpn
-        
-#        TELEPRESENCE_CONNECTED_CLUSTER=$(telepresence status --output yaml | yq -r '.user_daemon | select(.running == true) | .kubernetes_context')
-#        if [ "${TELEPRESENCE_CONNECTED_CLUSTER}" != "${CONTEXT}" ]; then
-#          echo "If telepresence fails to quit, run the 'telepresence-upgrade' task"
-#          telepresence quit && telepresence connect --context ${CONTEXT}
-#        fi
+
     silent: true
     internal: false
 
@@ -72,7 +65,6 @@ tasks:
   refresh-external-secrets:
     desc: Trigger refresh for all failed ExternalSecrets in the cluster
     cmds:
-      - task: switch-context
       - |
         for n in $(kubectl get ns -o yaml | yq '.items[].metadata.name'); do
           echo "Searching for ExternalSecrets in namespace $n..."
@@ -86,7 +78,6 @@ tasks:
   refresh-push-secrets:
     desc: Trigger refresh for all failed PushSecrets in the cluster
     cmds:
-      - task: switch-context
       - |
         for n in $(kubectl get ns -o yaml | yq '.items[].metadata.name'); do 
           kubectl config set-context --current --namespace=$n 
@@ -100,7 +91,6 @@ tasks:
   kubent:
     desc: Check the cluster for deprecated API's
     cmds:
-      - task: switch-context
       - |
         echo "Choose a target Kubernetes version:"
         K8S_VERSION=$(gum input --placeholder="Kubernetes version")
@@ -120,7 +110,6 @@ tasks:
   telepresence-install:
     silent: true
     cmds:
-      - task: switch-context
       - telepresence helm install
 
   telepresence-upgrade:
@@ -153,7 +142,6 @@ tasks:
 
   emissary-ingress-manifest:
     cmds:
-      - task: switch-context
       - |
         NAMESPACE=$(gum choose $(kubectl get ns -o yaml | yq '.items[].metadata.name'))
         POD=$(gum choose $(kubectl get pods -n "${NAMESPACE}" -o yaml | yq '.items[].metadata.name'))
@@ -167,7 +155,6 @@ tasks:
 
   render-prometheus-config:
     cmds:
-      - task: switch-context
       - |
         kubectl -n prometheus get secret prometheus-prometheus-kube-prometheus-prometheus -ojson | jq -r '.data["prometheus.yaml.gz"]' | base64 -d | gzip --uncompress > prometheus.yaml
     silent: true

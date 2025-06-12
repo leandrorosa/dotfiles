@@ -7,7 +7,7 @@ SETUVAR --export BING_REWARDS_USER:leandro\x2erosagf\x40gmail\x2ecom
 SETUVAR --export GO111MODULE:auto
 SETUVAR --export GOOS:darwin
 SETUVAR --export --path GOPATH:/Users/leandrorosa
-SETUVAR JAVA_HOME:/opt/homebrew/opt/openjdk
+SETUVAR --export JAVA_HOME:/Users/leandrorosa/\x2esdkman/candidates/java/21\x2dtem
 SETUVAR --export NEXUS_PASSWORD:4xDb8ZfKEabmPo
 SETUVAR --export NEXUS_USERNAME:leandro\x2erosa\x404screen\x2ecom
 SETUVAR --export VAULT_ADDR:https\x3a//vault\x2e4screen\x2edev
@@ -26,18 +26,18 @@ SETUVAR fish_color_error:ff5555
 SETUVAR fish_color_escape:ff79c6
 SETUVAR fish_color_history_current:\x2d\x2dbold
 SETUVAR fish_color_host:bd93f9
-SETUVAR fish_color_host_remote:\x1d
-SETUVAR fish_color_keyword:\x1d
+SETUVAR fish_color_host_remote:bd93f9
+SETUVAR fish_color_keyword:ff79c6
 SETUVAR fish_color_match:\x2d\x2dbackground\x3dbrblue
 SETUVAR fish_color_normal:f8f8f2
 SETUVAR fish_color_operator:50fa7b
-SETUVAR fish_color_option:\x1d
+SETUVAR fish_color_option:ffb86c
 SETUVAR fish_color_param:bd93f9
 SETUVAR fish_color_quote:f1fa8c
 SETUVAR fish_color_redirection:f8f8f2
 SETUVAR fish_color_search_match:\x2d\x2dbackground\x3d44475a
 SETUVAR fish_color_selection:\x2d\x2dbackground\x3d44475a
-SETUVAR fish_color_status:red
+SETUVAR fish_color_status:ff5555
 SETUVAR fish_color_user:8be9fd
 SETUVAR fish_color_valid_path:\x2d\x2dunderline
 SETUVAR fish_key_bindings:fish_default_key_bindings
@@ -54,4 +54,4 @@ SETUVAR fish_pager_color_selected_background:\x2d\x2dbackground\x3d44475a
 SETUVAR fish_pager_color_selected_completion:f8f8f2
 SETUVAR fish_pager_color_selected_description:6272a4
 SETUVAR fish_pager_color_selected_prefix:8be9fd
-SETUVAR fish_user_paths:/opt/homebrew/opt/postgresql\x4015/bin\x1e/Users/leandrorosa/\x2ecargo/bin\x1e/Users/leandrorosa/Library/Application\x20Support/multipass/bin\x1e/Users/leandrorosa/\x2easdf/installs/java/graalvm\x2d22\x2e3\x2e0\x2bjava19/bin\x1e/Users/leandrorosa/\x2easdf/installs/java/adoptopenjdk\x2d17\x2e0\x2e5\x2b8/bin\x1e/Users/leandrorosa/bin/jib\x2d0\x2e12\x2e0/bin\x1e/Users/leandrorosa/\x2easdf/installs/java/adoptopenjdk\x2d19\x2e0\x2e1\x2b10/bin\x1e/Users/leandrorosa/bin/jbing\x2drewards\x2d0\x2e0\x2e1\x2dSNAPSHOT/bin\x1e/opt/homebrew/opt/libpq/bin\x1e/Users/leandrorosa/\x2easdf/installs/java/adoptopenjdk\x2d11\x2e0\x2e15\x2b10/bin\x1e/Users/leandrorosa/\x2esdkman/candidates/java/current/bin\x1e/Users/leandrorosa/\x2easdf/installs/java/graalvm\x2d22\x2e1\x2e0\x2bjava17/bin\x1e/Users/leandrorosa/Code/Go/bin\x1e/Users/leandrorosa/\x2ejbang/bin\x1e/Users/leandrorosa/\x2egem/ruby/2\x2e7\x2e0/bin\x1e/Users/leandrorosa/\x2elocal/bin\x1e/Users/leandrorosa/bin\x1e/opt/homebrew/opt/openjdk/bin\x1e/opt/homebrew/opt/openjdk\x4011/bin\x1e/opt/homebrew/bin\x1e/opt/homebrew/bin/bin\x1e/home/linuxbrew/\x2elinuxbrew/bin\x1e/Users/leandrorosa/\x2efig/bin
+SETUVAR fish_user_paths:/Users/leandrorosa/\x2esdkman/candidates/java/21\x2dtem/bin\x1e/opt/homebrew/opt/postgresql\x4015/bin\x1e/Users/leandrorosa/\x2ecargo/bin\x1e/Users/leandrorosa/Library/Application\x20Support/multipass/bin\x1e/Users/leandrorosa/\x2easdf/installs/java/graalvm\x2d22\x2e3\x2e0\x2bjava19/bin\x1e/Users/leandrorosa/\x2easdf/installs/java/adoptopenjdk\x2d17\x2e0\x2e5\x2b8/bin\x1e/Users/leandrorosa/bin/jib\x2d0\x2e12\x2e0/bin\x1e/Users/leandrorosa/\x2easdf/installs/java/adoptopenjdk\x2d19\x2e0\x2e1\x2b10/bin\x1e/Users/leandrorosa/bin/jbing\x2drewards\x2d0\x2e0\x2e1\x2dSNAPSHOT/bin\x1e/opt/homebrew/opt/libpq/bin\x1e/Users/leandrorosa/\x2easdf/installs/java/adoptopenjdk\x2d11\x2e0\x2e15\x2b10/bin\x1e/Users/leandrorosa/\x2esdkman/candidates/java/current/bin\x1e/Users/leandrorosa/\x2easdf/installs/java/graalvm\x2d22\x2e1\x2e0\x2bjava17/bin\x1e/Users/leandrorosa/Code/Go/bin\x1e/Users/leandrorosa/\x2ejbang/bin\x1e/Users/leandrorosa/\x2egem/ruby/2\x2e7\x2e0/bin\x1e/Users/leandrorosa/\x2elocal/bin\x1e/Users/leandrorosa/bin\x1e/opt/homebrew/opt/openjdk/bin\x1e/opt/homebrew/opt/openjdk\x4011/bin\x1e/opt/homebrew/bin\x1e/opt/homebrew/bin/bin\x1e/home/linuxbrew/\x2elinuxbrew/bin\x1e/Users/leandrorosa/\x2efig/bin

@@ -47,11 +47,11 @@ tasks:
 #        vars:
 #          DATABASE: customer-metabase-db
 
-#  apicurio-db:
-#    cmds:
-#      - task: dump
-#        vars:
-#          DATABASE: apicurio-db
+  apicurio-db:
+    cmds:
+      - task: dump
+        vars:
+          DATABASE: apicurio-db
 
   keycloak-db:
     cmds:

@@ -1,4 +1,5 @@
 # alias docker="podman"
+alias docker="podman"
 alias d='docker'
 alias mci='mvn clean install'
 alias rfish='source ~/.config/fish/config.fish'

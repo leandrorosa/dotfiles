@@ -4,8 +4,8 @@ version: '3'
 
 
 includes:
-#  common: ./postgres/common/postgres.yaml
+  common: ./postgres/common/postgres.yaml
 #  emea-int: ./postgres/emea-int/postgres.yaml
-  emea-dev: ./postgres/emea-dev/postgres.yaml
+#  emea-dev: ./postgres/emea-dev/postgres.yaml
 #  emea-prod: ./postgres/emea-prod/postgres.yaml
 #  local: ./postgres/local/postgres.yaml
