@@ -5,6 +5,6 @@ return {
     tab_bar_at_bottom = true,
     use_fancy_tab_bar = false,
     window_decorations = "RESIZE",
-    font = wezterm.font "Monaco",
+    font = wezterm.font "FiraCode Nerd Font",
     font_size = 12
 }

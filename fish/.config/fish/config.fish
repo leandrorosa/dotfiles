@@ -16,3 +16,7 @@ source-dir ~/.config/fish/functions
 source-dir ~/.config/fish/completions
 
 source-dir ~/.config/fish/shell-config
+
+# bun
+set --export BUN_INSTALL "$HOME/.bun"
+set --export PATH $BUN_INSTALL/bin $PATH

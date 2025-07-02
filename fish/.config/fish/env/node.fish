@@ -1,0 +1,1 @@
+# set -gx nvm_default_version v24.3.0
