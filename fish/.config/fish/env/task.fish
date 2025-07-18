@@ -1,0 +1,2 @@
+task --completion fish | source
+
