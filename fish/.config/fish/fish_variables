@@ -7,7 +7,6 @@ SETUVAR --export BING_REWARDS_USER:leandro\x2erosagf\x40gmail\x2ecom
 SETUVAR --export GO111MODULE:auto
 SETUVAR --export GOOS:darwin
 SETUVAR --export --path GOPATH:/Users/leandrorosa
-SETUVAR --export JAVA_HOME:/Users/leandrorosa/\x2esdkman/candidates/java/21\x2dtem
 SETUVAR --export NEXUS_PASSWORD:4xDb8ZfKEabmPo
 SETUVAR --export NEXUS_USERNAME:leandro\x2erosa\x404screen\x2ecom
 SETUVAR --export VAULT_ADDR:https\x3a//vault\x2e4screen\x2edev
