@@ -1,6 +1,6 @@
 
-set -x JAVA_HOME "/Users/leandrorosa/.sdkman/candidates/java/21-tem"
-fish_add_path "$JAVA_HOME/bin"
+# set -x JAVA_HOME "/Users/leandrorosa/.sdkman/candidates/java/24-tem"
+# fish_add_path "$JAVA_HOME/bin"
 
 # set -Ux GRADLE_OPTS "-Dorg.gradle.daemon=false" 
 set -e GRADLE_OPTS
