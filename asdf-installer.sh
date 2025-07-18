@@ -11,9 +11,9 @@ asdf plugin add golang https://github.com/asdf-community/asdf-golang.git
 
 # kubernetes
 asdf plugin add k9s
-adsf plugin add kubectl
-adsf plugin add kubectx
-adsf plugin add minikube
+asdf plugin add kubectl
+asdf plugin add kubectx
+asdf plugin add minikube
 
 # tools
 asdf plugin add task
