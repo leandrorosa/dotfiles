@@ -23,3 +23,10 @@ tasks:
   restart-unmeshed:
     cmds:
       - curl -X POST system-k8s-watcher-service.fourscreen:8080/api/system/v1/linkerd/restartUnmeshed
+
+  sps-offers-call:
+    cmds: 
+      - |
+        curl -X POST -H 'accept: application/json' -H 'Fourscreen-User-Id: fd17eccf-1b18-4c4b-8f4e-8991f9d80bbc' -H 'Fourscreen-Organization-Id: d94df4f1-c529-4462-96b0-26d1d52bc21f' -H 'Fourscreen-Permissions: { "read-offers" : [ "BRAND_MERCEDES" ] }' -H 'Fourscreen-Organization-Domain: SUPPLY' -H 'Fourscreen-Organization-Name-Base64: TWVyY2VkZXMgQUcgKEdlcm1hbnkp' -H 'Market: DE' -H 'Brand: BRAND_MERCEDES' -H 'Content-Type: application/json' -H 'Offer-Language: *' -H 'Content-Length: 259' -d '{"area": {"type": "Polygon", "coordinates": [[[57.350088048617806, -19.527809077793194], [36.33911461251961, -19.527809077793194], [36.33911461251961, 37.393350396917995], [57.350088048617806, 37.393350396117995], [57.350088048617806, -19.527809077793194]]]}}' 'http://supply-provisioning-service.fourscreen:8080/api/supply/v1/offers?includeAssets=false' | jq '.'
+    silent: true
+  
